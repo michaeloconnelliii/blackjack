@@ -1,0 +1,162 @@
+
+/* ====== Typography ====== */
+h1 {
+    color: goldenrod;
+    text-shadow: 0 0 5px black;
+    font-size: 4.15rem;
+}
+
+body {
+    font-family: 'IM Fell Great Primer', serif;
+}
+
+.play-btn {
+    font-size: 1.2em;
+    font-family: 'IM Fell Great Primer', serif;
+}
+
+
+/* ====== Global Content ====== */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-width: 100%;
+    min-height: 100%;
+}
+
+body {
+    background: darkgreen;
+
+    margin: 0;
+    min-width: 100%;
+}
+
+/* ====== Front Page ====== */
+.front-page {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    /* Change when ready */
+    display: none;
+}
+
+.front-page-hidden {
+    display: none;
+}
+
+.card-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    align-content: flex-start;
+    height: 90%;
+    min-height: 100px;
+    width: 90%;
+    min-width: 30px;
+}
+
+.ace {
+    background: url('images/cards/AC.png');
+}
+
+.joker {
+    background: url('images/cards/JH.png');
+}
+
+.front-page-card {
+    height: 325px;
+    width: 200px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    object-fit: contain;
+}
+
+.card-cross-right {
+    margin-right: -55px;
+    margin-bottom: 55px;
+}
+
+.card-cross-left {
+    margin-left: -55px;
+}
+
+.play-btn {
+    cursor: pointer;
+    width: 200px;
+    height: 30px;
+    background: #D02000;
+    color: white;
+    
+}
+
+.play-btn:hover,
+.play-btn:focus {
+    transform: scale(1.05);
+    box-shadow: 5px 15px 30px -11px #192824;
+}
+
+/* ====== Play modal ====== */
+.play-modal {
+    margin: 0 auto;
+    width: 100%;
+    height: 100%;
+    max-width: 1100px;
+    display: flex;
+    justify-content: end;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5em;
+}
+
+.card-amt {
+    margin-bottom: auto;
+    align-self: flex-end;
+}
+
+#player-cards, #dealer-cards {
+    background: url('images/cards/JH.png');
+    height: 525px;
+    width: 100px;
+    min-width: 68px;
+    margin: 0;
+    background-size: contain;
+    background-repeat: no-repeat;
+    object-fit: contain;
+}
+
+.test {
+    width: 100px;
+    height: 100px;
+    background: pink;
+}
+
+.bet-container {
+    width: 100%;
+    height: 30%;
+    min-height: 200px;
+    background: red;
+}
+
+.deal-btn {
+    width: 175px;
+    height: 50px;
+    min-height: 35px;
+}
+
+.bank-modal {
+    width: 100%;
+    height: 20vh;
+    min-height: 100px;
+    background: blue;
+}
+
+/* TEMPORARY */
+.deal-btn, .bank-modal {
+    display: none;
+}

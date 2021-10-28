@@ -11,7 +11,7 @@
     <body>
         <div id="front-page" class="front-page">
             <h1>Blackjack</h1>
-            <div class="front-page-card-container">
+            <div class="card-container">
                 <div class="front-page-card ace card-cross-right"></div>
                 <div class="front-page-card joker card-cross-left"></div>
             </div>
@@ -19,9 +19,17 @@
         </div>
         <div id="play-modal" class="play-modal">
             <div id="card-amt" class="card-amt test"></div>
-            <div id="dealer-cards" class="test dealer"></div>
+            <div id="dealer-card-container" class="card-container">
+                <div id="dealer-cards" class="card-overlap"></div>
+                <div id="dealer-cards" class="card-overlap"></div>
+                <div id="dealer-cards"></div>
+            </div>
             <div id="bet-container" class="test bet-container"></div>
-            <div id="player-cards" class="test"></div>
+            <div id="player-card-container" class="card-container">
+                <div id="player-cards"></div>
+                <div id="player-cards"></div>
+                <div id="player-cards"></div>
+            </div>
             <button id="deal-btn" class="deal-btn test"></button>
             <div id="bank-modal" class="test bank-modal"></div>
         </div>
