@@ -46,13 +46,6 @@ body {
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-
-    /* Change when ready */
-    display: none;
-}
-
-.front-page-hidden {
-    display: none;
 }
 
 .card-container {
@@ -172,6 +165,10 @@ body {
     height: 20vh;
     min-height: 100px;
     background: blue;
+}
+
+.hidden {
+    display: none;
 }
 
 /* TEMPORARY */
