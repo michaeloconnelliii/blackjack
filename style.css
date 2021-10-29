@@ -125,11 +125,13 @@ body {
 }
 
 #player-cards, #dealer-cards {
+    /* Temporary */
+    display: none;
+    
     background: url('images/cards/JH.png');
     height: 100%;
     min-height: 100px;
     width: 30%;
-    /* min-width: 30px; */
     background-size: contain;
     background-repeat: no-repeat;
     object-fit: scale-down;
@@ -155,6 +157,9 @@ body {
 }
 
 #player-amt {
+    /* Temporary */
+    display: none;
+
     align-self: flex-start;
     width: 20%;
     height: 15%;
@@ -170,6 +175,6 @@ body {
 }
 
 /* TEMPORARY */
-.deal-btn, .bank-modal {
+/* .deal-btn, .bank-modal {
     display: none;
-}
+} */
