@@ -67,14 +67,14 @@ function displayCardNum(cardNum) {
 
 // Displays appropriate number of chips. For example, if a user only has $4, 4 $1 chips will be displayed and no others 
 function displayChips() {
-    
+
 }
 
 /* TODO
    - Add chips
    -      */
 function displayBank() {
-    playerAmt.textContent = `$${player.money}`;
+    playerAmt.textContent += `$${player.money}`;
 }
 
 async function startGame() {
