@@ -49,6 +49,9 @@ const playBtn = document.getElementById('play-btn');
 const dealBtn = document.getElementById('deal-btn');
 const frontPage = document.getElementById('front-page');
 const playModal = document.getElementById('play-modal');
+const bank = document.getElementById('bank-modal');
+const playerAmt = document.getElementById('player-amt');
+const cardAmt = document.getElementById('card-amt');
 
 const startingMoney = 2000;
 const startingDecks = 2;
@@ -59,8 +62,19 @@ let deck = new Deck(startingDecks);
 
 /* Functions */
 function displayCardNum(cardNum) {
-    const cardAmt = document.getElementById('card-amt');
     cardAmt.textContent += cardNum;
+}
+
+// Displays appropriate number of chips. For example, if a user only has $4, 4 $1 chips will be displayed and no others 
+function displayChips() {
+    
+}
+
+/* TODO
+   - Add chips
+   -      */
+function displayBank() {
+    playerAmt.textContent = `$${player.money}`;
 }
 
 async function startGame() {
@@ -72,14 +86,6 @@ async function startGame() {
     await deck.initDeck();
     dealBtn.classList.remove('hidden');
     displayCardNum(deck.cardsRemaining);
-}
-
-/* TODO
-   - Add chips
-   -      */
-function displayBank() {
-    const bank = document.getElementById('bank-modal');
-    bank.textContent = `$${player.money}`;
 }
 
 /* Event Handlers */
