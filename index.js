@@ -2,6 +2,7 @@
 class Player {
     constructor(money) {
         this.money = money;
+        this.score = 0;
     }
 }
 
@@ -54,7 +55,7 @@ const fiftyChips = document.getElementById('fifty-chips-container');
 const oneHundredChips = document.getElementById('hundred-chips-container');
 const fiveHundredChips = document.getElementById('five-hundred-chips-container');
 
-const startingMoney = 5;
+const startingMoney = 2000;
 const startingDecks = 2;
 
 let player = new Player(startingMoney);
@@ -66,7 +67,7 @@ function displayCardNum(cardNum) {
     cardAmt.textContent += cardNum;
 }
 
-// Displays appropriate number of chips. For example, if a user only has $4, 4 $1 chips will be displayed and no others 
+// Displays appropriate number of chips. For example, if a user only has $4, 4, $1 chips will be displayed and no others 
 function displayChips() {
     chipAmtToContainer = {
         1: onesChips,
@@ -100,11 +101,40 @@ function displayChips() {
     }
 }
 
-/* TODO
-   - Add chips
-   -      */
+/* Method that gets called every player turn before cards are dealt */
 function displayBank() {
     playerAmt.textContent += `$${player.money}`;
+    displayChips();
+}
+
+/* Convert abstract non-numerical (king, jack, queen. etc) values and all other value strings (1, 2, 3, etc) to numerical (Number) values */
+function convertToValue(cardVal) {
+    const cardValToScoreVal = {
+        'ACE': (player.score >= 21 ? 1 : 11),
+        'KING': 10,
+        'QUEEN': 10,
+        'JOKER': 10,
+        'JACK': 10
+    }
+
+    return Number(cardValToScoreVal.hasOwnProperty(cardVal) ? cardValToScoreVal[cardVal] : cardVal);
+}
+
+/* Initial card dealing and card setup */
+async function dealCards() {
+    const cards = await deck.drawCards(4);
+    
+    // player and dealer each get 2 cards
+    cards.forEach( ( card, i ) => {
+        if(i < 2) {
+            player.score += convertToValue(card.value);
+            // put cards in player area
+        }
+        else {
+            dealer.score += convertToValue(card.value);
+            // put cards in dealer area
+        }
+    });
 }
 
 async function startGame() {
@@ -124,10 +154,7 @@ playBtn.addEventListener('click', () => {
     startGame();
 });
 
-/* Deal Cards */
+/* Initial Deal Cards */
 dealBtn.addEventListener('click', () => {
-    deck.drawCards(4)
-    .then( (cards) => {
-        console.log(cards);
-    });
-})
+    dealCards();
+});
