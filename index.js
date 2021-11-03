@@ -49,6 +49,13 @@ const playModal = document.getElementById('play-modal');
 const bank = document.getElementById('bank-modal');
 const playerAmt = document.getElementById('player-amt');
 const cardAmt = document.getElementById('card-amt');
+const dealerCardContainer = document.getElementById('dealer-card-container');
+const playerCardContainer = document.getElementById('player-card-container');
+const onesChipsContainer = document.getElementById('one-chips-label-container');
+const twentyFiveChipsContainer = document.getElementById('twenty-five-chips-label-container');
+const fiftyChipsContainer = document.getElementById('fifty-chips-label-container');
+const oneHundredChipsContainer = document.getElementById('hundred-chips-label-container');
+const fiveHundredChipsContainer = document.getElementById('five-hundred-chips-label-container');
 const onesChips = document.getElementById('one-chips-container');
 const twentyFivesChips = document.getElementById('twenty-five-chips-container');
 const fiftyChips = document.getElementById('fifty-chips-container');
@@ -70,18 +77,19 @@ function displayCardNum(cardNum) {
 // Displays appropriate number of chips. For example, if a user only has $4, 4, $1 chips will be displayed and no others 
 function displayChips() {
     chipAmtToContainer = {
-        1: onesChips,
-        25: twentyFivesChips,
-        50: fiftyChips,
-        100: oneHundredChips,
-        500: fiveHundredChips
+        1: [onesChipsContainer, onesChips],
+        25: [twentyFiveChipsContainer, twentyFivesChips],
+        50: [fiftyChipsContainer, fiftyChips],
+        100: [oneHundredChipsContainer, oneHundredChips],
+        500: [fiveHundredChipsContainer, fiveHundredChips]
     };
 
     const maxDisplayedChips = 5;
 
     for(amt in chipAmtToContainer) {
         let chipAmt = Math.floor(player.money / amt);
-        const chipContainer = chipAmtToContainer[amt];
+        const chipLabelContainer = chipAmtToContainer[amt][0];
+        const chipContainer = chipAmtToContainer[amt][1];
         const chipElements = chipContainer.children;
 
         chipAmt = (chipAmt >= maxDisplayedChips ? maxDisplayedChips : chipAmt);
@@ -97,7 +105,7 @@ function displayChips() {
         }
 
         // Hide the container if there aren't any chips visible
-        chipAmt <= 0 ? chipContainer.classList.add('hidden') : chipContainer.classList.remove('hidden');
+        chipAmt <= 0 ? chipLabelContainer.classList.add('hidden') : chipLabelContainer.classList.remove('hidden');
     }
 }
 
@@ -110,7 +118,7 @@ function displayBank() {
 /* Convert abstract non-numerical (king, jack, queen. etc) values and all other value strings (1, 2, 3, etc) to numerical (Number) values */
 function convertToValue(cardVal) {
     const cardValToScoreVal = {
-        'ACE': (player.score >= 21 ? 1 : 11),
+        'ACE': (player.score + 11 > 21 ? 1 : 11),
         'KING': 10,
         'QUEEN': 10,
         'JOKER': 10,
@@ -122,18 +130,37 @@ function convertToValue(cardVal) {
 
 /* Initial card dealing and card setup */
 async function dealCards() {
+
     const cards = await deck.drawCards(4);
+    console.log(cards);
     
     // player and dealer each get 2 cards
+    let timeOut = 0;
+
     cards.forEach( ( card, i ) => {
+        // Create the card
+        const newCard = document.createElement('div');
+        // One dealer card should be hidden
+        newCard.style.backgroundImage = (i === 2 ? `url("images/cards/card-back.png")`: `url(${card.image})`);
+        newCard.classList.add('card');
+
         if(i < 2) {
             player.score += convertToValue(card.value);
             // put cards in player area
+            setTimeout(() => {
+                playerCardContainer.appendChild(newCard); 
+            }, timeOut);
         }
         else {
             dealer.score += convertToValue(card.value);
             // put cards in dealer area
+            setTimeout(() => {
+                dealerCardContainer.appendChild(newCard); 
+            }, timeOut);
         }
+
+        timeOut += 200;
+        
     });
 }
 
