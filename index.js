@@ -1,9 +1,10 @@
 /* Objects, Constructors, Prototypes */
 class Player {
-    constructor(money) {
+    constructor(money, playersCardContainer) {
         this.money = money;
         this.score = 0;
         this.bets = [];
+        this.cardContainer = playersCardContainer;
     }
 }
 
@@ -67,8 +68,8 @@ const betFiveHundredChips = document.getElementById('bet-five-hundred-chips-cont
 const startingMoney = 2000;
 const startingDecks = 2;
 
-let player = new Player(startingMoney);
-let dealer = new Player(startingMoney);
+let player = new Player(startingMoney, playerCardContainer);
+let dealer = new Player(startingMoney, dealerCardContainer);
 let deck = new Deck(startingDecks);
 
 /* Functions */
@@ -95,6 +96,7 @@ function displayBankChips() {
     }
 }
 
+/* Run through Player's bets queue and make bet visible on bet table if bet exists (player chose bet), hide everything else */
 function displayBetChips() {
     const chipAmtToContainer = {
         1: betOneChips,
@@ -156,38 +158,38 @@ function convertToValue(cardVal) {
 }
 
 /* Initial card dealing and card setup */
-async function dealCards() {
-
-    const cards = await deck.drawCards(4);
+async function dealCards(cardsPerPlayer, players) {
+    // deal numCards per player
+    const numPlayers = players.length;
+    const cards = await deck.drawCards(cardsPerPlayer * numPlayers);
+    
     console.log(cards);
     
-    // player and dealer each get 2 cards
+    // delay for dealing cards
     let timeOut = 0;
+    
+    players.forEach( thePlayer => {
+        for(let i = 0; i < cardsPerPlayer; i++) {
+            // a card from the api call
+            const theCard = cards.pop();
+            
+            // Create the card
+            const newCard = document.createElement('div');
 
-    cards.forEach( ( card, i ) => {
-        // Create the card
-        const newCard = document.createElement('div');
-        // One dealer card should be hidden
-        newCard.style.backgroundImage = (i === 2 ? `url("images/cards/card-back.png")`: `url(${card.image})`);
-        newCard.classList.add('card');
+            // One dealer card should be hidden when dealing 2 cards per player
+            newCard.style.backgroundImage = ((thePlayer === dealer) && (cardsPerPlayer > 1) && (i === 0)) ? `url("images/cards/card-back.png")`: `url(${theCard.image})`;
+            newCard.classList.add('card');
 
-        if(i < 2) {
-            player.score += convertToValue(card.value);
-            // put cards in player area
+            // update score
+            thePlayer.score += convertToValue(theCard.value);
+            
+            // put cards in player/dealer area
             setTimeout(() => {
-                playerCardContainer.appendChild(newCard); 
+                thePlayer.cardContainer.appendChild(newCard); 
             }, timeOut);
-        }
-        else {
-            dealer.score += convertToValue(card.value);
-            // put cards in dealer area
-            setTimeout(() => {
-                dealerCardContainer.appendChild(newCard); 
-            }, timeOut);
-        }
 
-        timeOut += 200;
-        
+            timeOut += 200;
+        }
     });
 }
 
@@ -211,5 +213,5 @@ playBtn.addEventListener('click', () => {
 
 /* Initial Deal Cards */
 dealBtn.addEventListener('click', () => {
-    dealCards();
+    dealCards(2, [player, dealer]);
 });
