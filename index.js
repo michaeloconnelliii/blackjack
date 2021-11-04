@@ -3,6 +3,7 @@ class Player {
     constructor(money) {
         this.money = money;
         this.score = 0;
+        this.bets = [];
     }
 }
 
@@ -48,19 +49,20 @@ const frontPage = document.getElementById('front-page');
 const playModal = document.getElementById('play-modal');
 const bank = document.getElementById('bank-modal');
 const playerAmt = document.getElementById('player-amt');
+const playerBet = document.getElementById('player-bet');
 const cardAmt = document.getElementById('card-amt');
 const dealerCardContainer = document.getElementById('dealer-card-container');
 const playerCardContainer = document.getElementById('player-card-container');
-const onesChipsContainer = document.getElementById('one-chips-label-container');
-const twentyFiveChipsContainer = document.getElementById('twenty-five-chips-label-container');
-const fiftyChipsContainer = document.getElementById('fifty-chips-label-container');
-const oneHundredChipsContainer = document.getElementById('hundred-chips-label-container');
-const fiveHundredChipsContainer = document.getElementById('five-hundred-chips-label-container');
-const onesChips = document.getElementById('one-chips-container');
-const twentyFivesChips = document.getElementById('twenty-five-chips-container');
+const oneChips = document.getElementById('one-chips-container');
+const twentyFiveChips = document.getElementById('twenty-five-chips-container');
 const fiftyChips = document.getElementById('fifty-chips-container');
 const oneHundredChips = document.getElementById('hundred-chips-container');
 const fiveHundredChips = document.getElementById('five-hundred-chips-container');
+const betOneChips = document.getElementById('bet-one-chips-container');
+const betTwentyFiveChips = document.getElementById('bet-twenty-five-chips-container');
+const betFiftyChips = document.getElementById('bet-fifty-chips-container');
+const betOneHundredChips = document.getElementById('bet-hundred-chips-container');
+const betFiveHundredChips = document.getElementById('bet-five-hundred-chips-container');
 
 const startingMoney = 2000;
 const startingDecks = 2;
@@ -74,45 +76,70 @@ function displayCardNum(cardNum) {
     cardAmt.textContent += cardNum;
 }
 
-// Displays appropriate number of chips. For example, if a user only has $4, 4, $1 chips will be displayed and no others 
-function displayChips() {
-    chipAmtToContainer = {
-        1: [onesChipsContainer, onesChips],
-        25: [twentyFiveChipsContainer, twentyFivesChips],
-        50: [fiftyChipsContainer, fiftyChips],
-        100: [oneHundredChipsContainer, oneHundredChips],
-        500: [fiveHundredChipsContainer, fiveHundredChips]
+// Displays appropriate number of chips. For example, if a user only has $4, a $1 chip will be displayed and no others 
+function displayBankChips() {
+    const chipAmtToContainer = {
+        1: oneChips,
+        25: twentyFiveChips,
+        50: fiftyChips,
+        100: oneHundredChips,
+        500: fiveHundredChips
     };
 
-    const maxDisplayedChips = 5;
-
     for(amt in chipAmtToContainer) {
-        let chipAmt = Math.floor(player.money / amt);
-        const chipLabelContainer = chipAmtToContainer[amt][0];
-        const chipContainer = chipAmtToContainer[amt][1];
-        const chipElements = chipContainer.children;
-
-        chipAmt = (chipAmt >= maxDisplayedChips ? maxDisplayedChips : chipAmt);
+        // If player has enough money for a chip, make it visible
+        const hasChip = ((player.money / amt) >= 1);
+        const chipContainer = chipAmtToContainer[amt];
         
-        // Make correct number of chips visible
-        for(let i = 0; i < chipAmt; i++) {
-            chipElements[i].classList.remove('hidden');
-        }
-
-        // Make the rest of chips hidden
-        for(let i = chipAmt; i < maxDisplayedChips; i++) {
-            chipElements[i].classList.add('hidden');
-        }
-
-        // Hide the container if there aren't any chips visible
-        chipAmt <= 0 ? chipLabelContainer.classList.add('hidden') : chipLabelContainer.classList.remove('hidden');
+        hasChip ? chipContainer.classList.remove('hidden') : chipContainer.classList.add('hidden');
     }
 }
 
+function displayBetChips() {
+    const chipAmtToContainer = {
+        1: betOneChips,
+        25: betTwentyFiveChips,
+        50: betFiftyChips,
+        100: betOneHundredChips,
+        500: betFiveHundredChips
+    };
+
+    let isChipDisplayed = {
+        1: false,
+        25: false,
+        50: false,
+        100: false,
+        500: false
+    };
+
+    player.bets.forEach( (bet) => {
+        isChipDisplayed[bet] = true;
+    });
+
+    for(amt in isChipDisplayed) {
+        const chipContainer = chipAmtToContainer[amt];
+        isChipDisplayed[amt] ? chipContainer.classList.remove('hidden') : chipContainer.classList.add('hidden');
+    }
+}
+
+// Get player's total bet by adding bets in their 'bets' queue
+function getTotalBet(thePlayer) {
+    let totalBet = 0;
+    thePlayer.bets.forEach( bet => {
+        thePlayer.money -= bet;
+        totalBet += bet;
+    });
+
+    return totalBet;
+}
+
+
 /* Method that gets called every player turn before cards are dealt */
-function displayBank() {
+function displayPlayerInfo() {
     playerAmt.textContent += `$${player.money}`;
-    displayChips();
+    playerBet.textContent += `$${getTotalBet(player)}`;
+    displayBankChips();
+    displayBetChips();
 }
 
 /* Convert abstract non-numerical (king, jack, queen. etc) values and all other value strings (1, 2, 3, etc) to numerical (Number) values */
@@ -167,8 +194,9 @@ async function dealCards() {
 async function startGame() {
     frontPage.classList.add('hidden');
     playModal.classList.remove('hidden');
-    
-    displayBank();
+    // start player game with default bet of $100
+    player.bets.push(100);
+    displayPlayerInfo();
     
     await deck.initDeck();
     dealBtn.classList.remove('hidden');
