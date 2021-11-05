@@ -88,6 +88,7 @@ function updateBet(betAmt) {
 
     // player chose to remove bet from center betting table
     if(betAmt < 0) {
+        // bets queue only has positive amounts, look up abs value
         let index = player.bets.indexOf(Math.abs(betAmt));
         player.bets.splice(index, 1)
     }
@@ -144,6 +145,8 @@ function displayPlayerInfo() {
     playerBet.textContent = `Bet: $${player.totalBet}`;
     displayBankChips();
     displayBetChips();
+    console.log(player.money);
+    player.totalBet <= 0 ? dealBtn.classList.add('hidden') : dealBtn.classList.remove('hidden');
 }
 
 /* Convert abstract non-numerical (king, jack, queen. etc) values and all other value strings (1, 2, 3, etc) to numerical (Number) values */
