@@ -139,14 +139,18 @@ function displayBetChips() {
     }
 }
 
-/* Method that gets called every player turn before cards are dealt */
+function hideDealBtn(hide) {
+    hide ? dealBtn.classList.add('hidden') : dealBtn.classList.remove('hidden');
+}
+
+/* Method that gets called every player turn before cards are dealt, updates environment for player */
 function displayPlayerInfo() {
     playerAmt.textContent = `Player Bank: $${player.money}`;
     playerBet.textContent = `Bet: $${player.totalBet}`;
     displayBankChips();
     displayBetChips();
     console.log(player.money);
-    player.totalBet <= 0 ? dealBtn.classList.add('hidden') : dealBtn.classList.remove('hidden');
+    hideDealBtn(player.totalBet <= 0);
 }
 
 /* Convert abstract non-numerical (king, jack, queen. etc) values and all other value strings (1, 2, 3, etc) to numerical (Number) values */
@@ -204,9 +208,9 @@ async function startGame() {
     // start player game with default bet of $100
     updateBet(100);
     displayPlayerInfo();
-    
     await deck.initDeck();
     dealBtn.classList.remove('hidden');
+    enableDecreaseBet(true);
     displayCardNum(deck.cardsRemaining);
 }
 
@@ -242,17 +246,43 @@ const dealerChips = {
     500: betFiveHundredChips
 };
 
-Object.entries(dealerChips).forEach( (pair) => {
-    const [ amt, chip ] = pair;
-    chip.addEventListener('click', () => {
-        console.log(Number(-amt));
-        updateBet(Number(-amt));
-        displayPlayerInfo();
-    });
-});
+
+/* Helper method for enableDecreaseBet s.t. we can reference the method when removing the event listeners */
+function updateDisplay(e) {
+    const amt = e.currentTarget.param;
+
+    updateBet(Number(-amt));
+    displayPlayerInfo();
+}
+
+/* For adding and removing ability to remove bets from the dealer counter. 
+   We don't want player to do this once cards are dealt. 
+   The 'select' class changes cursor to pointer */
+function enableDecreaseBet(allow) {
+    // Add the event listener
+    if(allow) {
+        Object.entries(dealerChips).forEach( (pair) => {
+            const [ amt, chip ] = pair;
+            chip.param = amt;
+            chip.classList.add('select');
+            chip.addEventListener('click', updateDisplay);
+        });
+    }
+    // Remove the event listener
+    else {
+        Object.entries(dealerChips).forEach( (pair) => {
+            const [ amt, chip ] = pair;
+            chip.classList.remove('select');
+            chip.removeEventListener('click', updateDisplay);
+        });
+    }
+}
 
 /* Initial Deal Cards */
 dealBtn.addEventListener('click', () => {
     dealCards(2, [player, dealer]);
     bank.classList.add('hidden');
+    hideDealBtn(true);
+    // Undo ability to remove chips
+    enableDecreaseBet(false);
 });
