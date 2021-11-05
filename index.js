@@ -4,6 +4,7 @@ class Player {
         this.money = money;
         this.score = 0;
         this.bets = [];
+        this.totalBet = 0;
         this.cardContainer = playersCardContainer;
     }
 }
@@ -77,6 +78,29 @@ function displayCardNum(cardNum) {
     cardAmt.textContent += cardNum;
 }
 
+// Update bet amount for Player if the bet is possible, don't do anything if it isn't
+// Remove a bet from the player's bets queue if bet is negative (player selected bet from bet counter to remove)
+function updateBet(betAmt) {
+    // player attempted to bet more than they had
+    if(betAmt > player.money) {
+        return false;
+    }
+
+    // player chose to remove bet from center betting table
+    if(betAmt < 0) {
+        let index = player.bets.indexOf(Math.abs(betAmt));
+        player.bets.splice(index, 1)
+    }
+    // player chose to place bet from player corner
+    else {
+        player.bets.push(betAmt);
+    }
+
+    player.totalBet += betAmt;
+    player.money -= betAmt;
+    return true;
+}
+
 // Displays appropriate number of chips. For example, if a user only has $4, a $1 chip will be displayed and no others 
 function displayBankChips() {
     const chipAmtToContainer = {
@@ -86,6 +110,8 @@ function displayBankChips() {
         100: oneHundredChips,
         500: fiveHundredChips
     };
+
+    console.log(player.bets);
 
     for(amt in chipAmtToContainer) {
         // If player has enough money for a chip, make it visible
@@ -106,40 +132,16 @@ function displayBetChips() {
         500: betFiveHundredChips
     };
 
-    let isChipDisplayed = {
-        1: false,
-        25: false,
-        50: false,
-        100: false,
-        500: false
-    };
-
-    player.bets.forEach( (bet) => {
-        isChipDisplayed[bet] = true;
-    });
-
-    for(amt in isChipDisplayed) {
+    for(amt in chipAmtToContainer) {
         const chipContainer = chipAmtToContainer[amt];
-        isChipDisplayed[amt] ? chipContainer.classList.remove('hidden') : chipContainer.classList.add('hidden');
+        (player.bets.indexOf(Number(amt)) >= 0) ? chipContainer.classList.remove('hidden') : chipContainer.classList.add('hidden');
     }
 }
 
-// Get player's total bet by adding bets in their 'bets' queue
-function getTotalBet(thePlayer) {
-    let totalBet = 0;
-    thePlayer.bets.forEach( bet => {
-        thePlayer.money -= bet;
-        totalBet += bet;
-    });
-
-    return totalBet;
-}
-
-
 /* Method that gets called every player turn before cards are dealt */
 function displayPlayerInfo() {
-    playerAmt.textContent += `$${player.money}`;
-    playerBet.textContent += `$${getTotalBet(player)}`;
+    playerAmt.textContent = `Player Bank: $${player.money}`;
+    playerBet.textContent = `Bet: $${player.totalBet}`;
     displayBankChips();
     displayBetChips();
 }
@@ -197,7 +199,7 @@ async function startGame() {
     frontPage.classList.add('hidden');
     playModal.classList.remove('hidden');
     // start player game with default bet of $100
-    player.bets.push(100);
+    updateBet(100);
     displayPlayerInfo();
     
     await deck.initDeck();
@@ -211,7 +213,43 @@ playBtn.addEventListener('click', () => {
     startGame();
 });
 
+/* Increase bet */
+const bankChips = { 
+    1: oneChips, 
+    25: twentyFiveChips, 
+    50: fiftyChips, 
+    100: oneHundredChips, 
+    500: fiveHundredChips 
+};
+
+Object.entries(bankChips).forEach( (pair) => {
+    const [ amt, chip ] = pair;
+    chip.addEventListener('click', () => {
+        updateBet(Number(amt));
+        displayPlayerInfo();
+    });
+});
+
+/* Decrease bet */
+const dealerChips = {
+    1: betOneChips,
+    25: betTwentyFiveChips,
+    50: betFiftyChips,
+    100: betOneHundredChips,
+    500: betFiveHundredChips
+};
+
+Object.entries(dealerChips).forEach( (pair) => {
+    const [ amt, chip ] = pair;
+    chip.addEventListener('click', () => {
+        console.log(Number(-amt));
+        updateBet(Number(-amt));
+        displayPlayerInfo();
+    });
+});
+
 /* Initial Deal Cards */
 dealBtn.addEventListener('click', () => {
     dealCards(2, [player, dealer]);
+    bank.classList.add('hidden');
 });
