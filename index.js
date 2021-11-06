@@ -1,11 +1,16 @@
 /* Objects, Constructors, Prototypes */
 class Player {
-    constructor(money, playersCardContainer) {
+    constructor(money, playersCardContainer, playersVisibleScore) {
+        /* stats */
         this.money = money;
         this.score = 0;
+        this.visibleScore = 0;
         this.bets = [];
         this.totalBet = 0;
+        
+        /* unique elements */
         this.cardContainer = playersCardContainer;
+        this.visibleScoreElement = playersVisibleScore;
     }
 }
 
@@ -47,11 +52,15 @@ class Deck {
 /* Global Objects */
 const playBtn = document.getElementById('play-btn');
 const dealBtn = document.getElementById('deal-btn');
+const hitBtn = document.getElementById('hit-btn');
+const standBtn = document.getElementById('stand-btn');
 const frontPage = document.getElementById('front-page');
 const playModal = document.getElementById('play-modal');
 const bank = document.getElementById('bank-modal');
 const playerAmt = document.getElementById('player-amt');
 const playerBet = document.getElementById('player-bet');
+const playerScore = document.getElementById('player-visible-score');
+const dealerScore = document.getElementById('dealer-visible-score');
 const cardAmt = document.getElementById('card-amt');
 const dealerCardContainer = document.getElementById('dealer-card-container');
 const playerCardContainer = document.getElementById('player-card-container');
@@ -69,13 +78,18 @@ const betFiveHundredChips = document.getElementById('bet-five-hundred-chips-cont
 const startingMoney = 2000;
 const startingDecks = 2;
 
-let player = new Player(startingMoney, playerCardContainer);
-let dealer = new Player(startingMoney, dealerCardContainer);
+let player = new Player(startingMoney, playerCardContainer, playerScore);
+let dealer = new Player(startingMoney, dealerCardContainer, dealerScore);
 let deck = new Deck(startingDecks);
 
 /* Functions */
 function displayCardNum(cardNum) {
     cardAmt.textContent += cardNum;
+}
+
+function displayHitAndStand() {
+    hitBtn.classList.remove('hidden');
+    standBtn.classList.remove('hidden');
 }
 
 // Update bet amount for Player if the bet is possible, don't do anything if it isn't
@@ -166,6 +180,13 @@ function convertToValue(cardVal) {
     return Number(cardValToScoreVal.hasOwnProperty(cardVal) ? cardValToScoreVal[cardVal] : cardVal);
 }
 
+function displayScore(thePlayer) {
+    let message;
+    thePlayer === player ? message = `Player's score: ${thePlayer.visibleScore}` : message = `Dealer's (visible) score: ${thePlayer.visibleScore}`;
+    thePlayer.visibleScoreElement.textContent = message;
+    thePlayer.visibleScoreElement.classList.remove('hidden');
+}
+
 /* Initial card dealing and card setup */
 async function dealCards(cardsPerPlayer, players) {
     // deal numCards per player
@@ -189,15 +210,22 @@ async function dealCards(cardsPerPlayer, players) {
             newCard.style.backgroundImage = ((thePlayer === dealer) && (cardsPerPlayer > 1) && (i === 0)) ? `url("images/cards/card-back.png")`: `url(${theCard.image})`;
             newCard.classList.add('card');
 
-            // update score
-            thePlayer.score += convertToValue(theCard.value);
+            // update score and visible score
+            const cardVal = convertToValue(theCard.value);
+            thePlayer.score += cardVal;
+            thePlayer.visibleScore += ((thePlayer === dealer) && (cardsPerPlayer > 1) && (i === 0)) ? 0 : cardVal;
             
             // put cards in player/dealer area
             setTimeout(() => {
                 thePlayer.cardContainer.appendChild(newCard); 
             }, timeOut);
 
+            // update player's visible score
+            displayScore(thePlayer)
+
             timeOut += 200;
+
+            console.log(player.visibleScore)
         }
     });
 }
@@ -205,10 +233,10 @@ async function dealCards(cardsPerPlayer, players) {
 async function startGame() {
     frontPage.classList.add('hidden');
     playModal.classList.remove('hidden');
+    await deck.initDeck();
     // start player game with default bet of $100
     updateBet(100);
     displayPlayerInfo();
-    await deck.initDeck();
     dealBtn.classList.remove('hidden');
     enableDecreaseBet(true);
     displayCardNum(deck.cardsRemaining);
@@ -285,4 +313,10 @@ dealBtn.addEventListener('click', () => {
     hideDealBtn(true);
     // Undo ability to remove chips
     enableDecreaseBet(false);
+    displayHitAndStand();
+});
+
+/* Hit */
+hitBtn.addEventListener('click', () => {
+    dealCards(1, [player]);
 });

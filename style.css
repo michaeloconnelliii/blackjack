@@ -39,7 +39,6 @@ html {
 
 body {
     background: darkgreen;
-
     margin: 0;
 }
 
@@ -193,24 +192,41 @@ button {
     align-items: center;
 }
 
-.deal-btn {
+.btn {
     width: 100px;
     height: 25px;
     min-height: 20px;
-    background: blue;
     color: white;
     border: none;
     border-bottom: 0.35px solid black;
     border-right: 0.35px solid black;
 }
 
-.deal-btn:hover,
-.deal-btn:focus {
+.deal-btn {
+    background: blue;
+}
+
+.btn:hover,
+.btn:focus {
     transform: scale(1.05);
     box-shadow: 5px 5px 30px -3px goldenrod;
 }
 
-#player-amt, #player-bet {
+.hit-stand {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75em
+}
+
+.hit-btn {
+    background: red;
+}
+
+.stand-btn {
+    background: blue;
+}
+
+#player-amt, #player-bet, .player-visible-score {
     width: auto;
     max-width: 200px;
     height: 15%;

@@ -22,6 +22,7 @@
             <div id="card-amt" class="card-amt test">
                 Cards Remaining: 
             </div>
+            <div id="dealer-visible-score" class="player-visible-score"></div>
             <div id="dealer-card-container" class="card-container"></div>
             <div id="bet-container" class="test bet-container">
                 <div id="bet-one-chips-container" class="chips-label-container">
@@ -41,34 +42,39 @@
                 </div>
             </div>
             <div id="player-card-container" class="card-container"></div>
+            <p id="player-visible-score" class="player-visible-score"></p>
             <div class="player-turn-modal">
                 <div class="deal-modal">
                     <div id="player-info">
                         <p id="player-bet"></p>
                         <p id="player-amt"></p>
                     </div>
-                    <button id="deal-btn" class="deal-btn hidden">Deal</button>
+                    <button id="deal-btn" class="deal-btn btn hidden">Deal</button>
+                    <div id="hit-stand" class="hit-stand">
+                        <button id="hit-btn" class="hit-btn btn hidden">Hit</button>
+                        <button id="stand-btn" class="stand-btn btn hidden">Stand</button>
+                    </div>
                 </div>
                 <div id="bank-modal" class="bank-modal">
                     <div id="one-chips-container" class="chips-label-container">
                         1
-                        <div class="chips one-chips one"></div>
+                        <div class="chips select one-chips one"></div>
                     </div>
                     <div id="twenty-five-chips-container" class="chips-label-container">
                         25
-                        <div class="chips twenty-five-chips one"></div>
+                        <div class="chips select twenty-five-chips one"></div>
                     </div>
                     <div id="fifty-chips-container" class="chips-label-container">
                         50
-                        <div class="chips fifty-chips one"></div>
+                        <div class="chips select fifty-chips one"></div>
                     </div>
                     <div id="hundred-chips-container" class="chips-label-container">
                         100
-                        <div class="chips hundred-chips one"></div>
+                        <div class="chips select hundred-chips one"></div>
                     </div>
                     <div id="five-hundred-chips-container" class="chips-label-container">
                         500
-                        <div class="chips five-hundred-chips one"></div>
+                        <div class="chips select five-hundred-chips one"></div>
                     </div>
                 </div>
             </div>
