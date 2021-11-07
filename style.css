@@ -226,7 +226,7 @@ button {
     background: blue;
 }
 
-#player-amt, #player-bet, .player-visible-score {
+#player-amt, #player-bet, .player-visible-score, .player-msg {
     width: auto;
     max-width: 200px;
     height: 15%;

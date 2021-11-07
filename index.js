@@ -61,6 +61,7 @@ const playerAmt = document.getElementById('player-amt');
 const playerBet = document.getElementById('player-bet');
 const playerScore = document.getElementById('player-visible-score');
 const dealerScore = document.getElementById('dealer-visible-score');
+const playerMsg = document.getElementById('player-msg');
 const cardAmt = document.getElementById('card-amt');
 const dealerCardContainer = document.getElementById('dealer-card-container');
 const playerCardContainer = document.getElementById('player-card-container');
@@ -228,6 +229,14 @@ async function dealCards(cardsPerPlayer, players) {
             console.log(player.visibleScore)
         }
     });
+
+    return Promise.resolve('cards have been dealt');
+}
+
+function dealerTurn() {
+    // remove hit and stand options so dealer can't be interrupted
+    hitBtn.classList.add('hidden');
+    standBtn.classList.add('hidden');
 }
 
 async function startGame() {
@@ -236,7 +245,6 @@ async function startGame() {
     await deck.initDeck();
     // start player game with default bet of $100
     updateBet(100);
-    displayBankChips();
     displayPlayerInfo();
     dealBtn.classList.remove('hidden');
     enableDecreaseBet(true);
@@ -317,7 +325,20 @@ dealBtn.addEventListener('click', () => {
     displayHitAndStand();
 });
 
+function displayPlayerMsg(thePlayer, msg) {
+    playerMsg.classList.remove('hidden');
+    playerMsg.textContent = msg;
+}
+
+// Allows us to wait for player score to update before determining what to do with score
+async function playerHit() {
+    await dealCards(1, [player]);
+    
+    if(player.score > 21) {
+        displayPlayerMsg(player, 'Bust!');
+        dealerTurn();
+    }
+}
+
 /* Hit */
-hitBtn.addEventListener('click', () => {
-    dealCards(1, [player]);
-});
+hitBtn.addEventListener('click', playerHit);
