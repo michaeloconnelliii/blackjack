@@ -236,6 +236,7 @@ async function startGame() {
     await deck.initDeck();
     // start player game with default bet of $100
     updateBet(100);
+    displayBankChips();
     displayPlayerInfo();
     dealBtn.classList.remove('hidden');
     enableDecreaseBet(true);
