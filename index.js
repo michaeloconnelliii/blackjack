@@ -233,10 +233,22 @@ async function dealCards(cardsPerPlayer, players) {
     return Promise.resolve('cards have been dealt');
 }
 
-function dealerTurn() {
+// Helper method for simulate dealer taking some time before making a decision
+function waitForCard(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function dealerTurn() {
     // remove hit and stand options so dealer can't be interrupted
     hitBtn.classList.add('hidden');
     standBtn.classList.add('hidden');
+
+    // dealer hits on soft 17
+    while(dealer.score < 17) {
+        console.log(`dealer score: ${dealer.score}`);
+        await dealCards(1, [dealer]);
+        await waitForCard(1500);
+    }
 }
 
 async function startGame() {
