@@ -1,6 +1,6 @@
 /* Objects, Constructors, Prototypes */
 class Player {
-    constructor(money, playersCardContainer, playersVisibleScore) {
+    constructor(money, playersCardContainer, playersVisibleScore, playersMsg) {
         /* stats */
         this.money = money;
         this.score = 0;
@@ -11,6 +11,7 @@ class Player {
         /* unique elements */
         this.cardContainer = playersCardContainer;
         this.visibleScoreElement = playersVisibleScore;
+        this.msgElement = playersMsg;
     }
 }
 
@@ -62,6 +63,7 @@ const playerBet = document.getElementById('player-bet');
 const playerScore = document.getElementById('player-visible-score');
 const dealerScore = document.getElementById('dealer-visible-score');
 const playerMsg = document.getElementById('player-msg');
+const dealerMsg = document.getElementById('dealer-msg');
 const cardAmt = document.getElementById('card-amt');
 const dealerCardContainer = document.getElementById('dealer-card-container');
 const playerCardContainer = document.getElementById('player-card-container');
@@ -79,13 +81,13 @@ const betFiveHundredChips = document.getElementById('bet-five-hundred-chips-cont
 const startingMoney = 2000;
 const startingDecks = 2;
 
-let player = new Player(startingMoney, playerCardContainer, playerScore);
-let dealer = new Player(startingMoney, dealerCardContainer, dealerScore);
+let player = new Player(startingMoney, playerCardContainer, playerScore, playerMsg);
+let dealer = new Player(startingMoney, dealerCardContainer, dealerScore, dealerMsg);
 let deck = new Deck(startingDecks);
 
 /* Functions */
-function displayCardNum(cardNum) {
-    cardAmt.textContent += cardNum;
+function displayCardNum() {
+    cardAmt.textContent = `Cards Remaining: ${deck.cardsRemaining}`;
 }
 
 function displayHitAndStand() {
@@ -227,6 +229,8 @@ async function dealCards(cardsPerPlayer, players) {
             timeOut += 200;
 
             console.log(player.visibleScore)
+
+            displayCardNum();
         }
     });
 
@@ -234,21 +238,24 @@ async function dealCards(cardsPerPlayer, players) {
 }
 
 // Helper method for simulate dealer taking some time before making a decision
-function waitForCard(ms) {
+function dealerWait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function dealerTurn() {
+    await dealerWait(1000);
     // remove hit and stand options so dealer can't be interrupted
     hitBtn.classList.add('hidden');
     standBtn.classList.add('hidden');
 
-    // dealer hits on soft 17
-    while(dealer.score < 17) {
+    // dealer hits on soft 17 and player hasn't busted
+    while(dealer.score < 17 && player.score < 22) {
         console.log(`dealer score: ${dealer.score}`);
         await dealCards(1, [dealer]);
-        await waitForCard(1500);
+        await dealerWait(1500);
     }
+
+    dealer.score > 21 ? displayPlayerMsg(dealer, 'Dealer bust!') : displayPlayerMsg(dealer, 'Dealer stands');
 }
 
 async function startGame() {
@@ -260,7 +267,7 @@ async function startGame() {
     displayPlayerInfo();
     dealBtn.classList.remove('hidden');
     enableDecreaseBet(true);
-    displayCardNum(deck.cardsRemaining);
+    displayCardNum();
 }
 
 /* Event Handlers */
@@ -337,9 +344,14 @@ dealBtn.addEventListener('click', () => {
     displayHitAndStand();
 });
 
+standBtn.addEventListener('click', () => {
+    displayPlayerMsg(player, 'Stand');
+    dealerTurn();
+})
+
 function displayPlayerMsg(thePlayer, msg) {
-    playerMsg.classList.remove('hidden');
-    playerMsg.textContent = msg;
+    thePlayer.msgElement.classList.remove('hidden');
+    thePlayer.msgElement.textContent = msg;
 }
 
 // Allows us to wait for player score to update before determining what to do with score
