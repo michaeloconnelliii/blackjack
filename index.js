@@ -1,3 +1,5 @@
+// TODO: display who won round which will likely involve flipping dealer card, update $ and start new round (undoing hidden to things, etc)
+
 /* Objects, Constructors, Prototypes */
 class Player {
     constructor(money, playersCardContainer, playersVisibleScore, playersMsg) {
