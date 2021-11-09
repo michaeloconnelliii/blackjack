@@ -9,7 +9,7 @@ class Player {
         this.visibleScore = 0;
         this.bets = [];
         this.totalBet = 0;
-        
+
         /* unique elements */
         this.cardContainer = playersCardContainer;
         this.visibleScoreElement = playersVisibleScore;
@@ -192,6 +192,10 @@ function displayScore(thePlayer) {
     thePlayer.visibleScoreElement.classList.remove('hidden');
 }
 
+function flipDealerCard() {
+
+}
+
 /* Initial card dealing and card setup */
 async function dealCards(cardsPerPlayer, players) {
     // deal numCards per player
@@ -210,9 +214,30 @@ async function dealCards(cardsPerPlayer, players) {
             
             // Create the card
             const newCard = document.createElement('div');
+            
+            // Flip card
+            if((thePlayer === dealer) && (cardsPerPlayer > 1) && (i === 0)) {
+                newCard.classList.add('flip-card');
 
-            // One dealer card should be hidden when dealing 2 cards per player
-            newCard.style.backgroundImage = ((thePlayer === dealer) && (cardsPerPlayer > 1) && (i === 0)) ? `url("images/cards/card-back.png")`: `url(${theCard.image})`;
+                // Setup the child class hierarchy for flip card
+                const innerCard = document.createElement('div');
+                const flipCardFront = document.createElement('div');
+                const flipCardBack = document.createElement('div');
+                
+                innerCard.classList.add('flip-card-inner');
+                flipCardFront.classList.add('flip-card-front');
+                flipCardBack.classList.add('flip-card-back');
+                flipCardBack.style.backgroundImage = `url(${theCard.image})`;
+
+                newCard.appendChild(innerCard);
+                innerCard.appendChild(flipCardFront);
+                innerCard.appendChild(flipCardBack);
+            }
+            else {
+                // One dealer card should be hidden when dealing 2 cards per player
+                newCard.style.backgroundImage = `url(${theCard.image})`;
+            }
+
             newCard.classList.add('card');
 
             // update score and visible score
