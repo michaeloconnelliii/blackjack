@@ -159,10 +159,18 @@ button {
 
 .flip-card-front {
     background-image: url("images/cards/card-back.png");
+
+    background-size: contain;
+    background-repeat: no-repeat;
+    object-fit: scale-down;
 }
 
 .flip-card-back {
     transform: rotateY(180deg);
+
+    background-size: contain;
+    background-repeat: no-repeat;
+    object-fit: scale-down;
 }
 
 @-webkit-keyframes slide {
