@@ -191,7 +191,7 @@ function convertToValue(cardVal) {
 
 function displayWinnerUpdateMoney() {
     if(dealer.score < playerScore || dealer.score > 21) {
-        player.money += player.totalBet;
+        player.money += (player.totalBet * 2);
         dealer.money -= player.totalBet;
         
         playerMsg.textContent = 'Player wins!';
@@ -199,7 +199,7 @@ function displayWinnerUpdateMoney() {
     }
     else if(dealer.score > player.score || player.score > 21) {
         player.money -= player.totalBet;
-        dealer.money += player.totalBet;
+        dealer.money += (player.totalBet * 2);
 
         playerMsg.textContent = 'Player lost!';
         dealerMsg.textContent = 'Dealer wins!';
@@ -307,12 +307,22 @@ async function dealCards(cardsPerPlayer, players) {
     return Promise.resolve('cards have been dealt');
 }
 
-async function removeCards() {
-    // remove player cards
-    for(card of player.cardContainer.children) {
-        card.classList.add('remove-card');
-        await dealerWait(200);
+async function removeCards(players) {
+    let removeCards = [];
+    
+    // move player cards off table
+    for(thePlayer of players) {
+        for(card of thePlayer.cardContainer.children) {
+            removeCards.push(card);
+            card.classList.add('remove-card');
+            await dealerWait(500);
+        }
     }
+
+    // remove card elements permanently
+    removeCards.forEach( card => { 
+        card.remove();
+    });
 }
 
 // Helper method for simulate dealer taking some time before making a decision
@@ -336,16 +346,29 @@ async function dealerTurn() {
     dealer.score > 21 ? displayPlayerMsg(dealer, 'Dealer bust!') : displayPlayerMsg(dealer, 'Dealer stands');
 }
 
+function startRound() {
+    displayPlayerInfo();
+    player.score = 0;
+    player.visibleScore = 0;
+    dealer.score = 0;
+    dealer.visibleScore = 0;
+    dealBtn.classList.remove('hidden');
+    bank.classList.remove('hidden');
+    playerMsg.classList.add('hidden');
+    dealerMsg.classList.add('hidden');
+    playerScore.classList.add('hidden');
+    dealerScore.classList.add('hidden');
+    enableDecreaseBet(true);
+    displayCardNum();
+}
+
 async function startGame() {
     frontPage.classList.add('hidden');
     playModal.classList.remove('hidden');
     await deck.initDeck();
     // start player game with default bet of $100
     updateBet(100);
-    displayPlayerInfo();
-    dealBtn.classList.remove('hidden');
-    enableDecreaseBet(true);
-    displayCardNum();
+    startRound();
 }
 
 /* Event Handlers */
@@ -429,6 +452,9 @@ async function playerStand() {
     displayScore([player, dealer], true);
     displayWinnerUpdateMoney();
     displayBankBet();
+    await dealerWait(2000);
+    await removeCards([player, dealer]);
+    startRound();
 }
 
 standBtn.addEventListener('click', playerStand);
@@ -449,6 +475,8 @@ async function playerHit() {
         displayScore([player, dealer], true)
         displayWinnerUpdateMoney();
         displayBankBet();
+        dealerWait(1500);
+        removeCards([player, dealer]);
     }
 }
 
