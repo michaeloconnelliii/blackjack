@@ -162,10 +162,14 @@ function hideDealBtn(hide) {
     hide ? dealBtn.classList.add('hidden') : dealBtn.classList.remove('hidden');
 }
 
-/* Method that gets called every player turn before cards are dealt, updates environment for player */
-function displayPlayerInfo() {
+function displayBankBet() {
     playerAmt.textContent = `Player Bank: $${player.money}`;
     playerBet.textContent = `Bet: $${player.totalBet}`;
+}
+
+/* Method that gets called every player turn before cards are dealt, updates environment for player */
+function displayPlayerInfo() {
+    displayBankBet();
     displayBankChips();
     displayBetChips();
     console.log(player.money);
@@ -185,15 +189,53 @@ function convertToValue(cardVal) {
     return Number(cardValToScoreVal.hasOwnProperty(cardVal) ? cardValToScoreVal[cardVal] : cardVal);
 }
 
-function displayScore(thePlayer) {
+function displayWinnerUpdateMoney() {
+    if(dealer.score < playerScore || dealer.score > 21) {
+        player.money += player.totalBet;
+        dealer.money -= player.totalBet;
+        
+        playerMsg.textContent = 'Player wins!';
+        dealerMsg.textContent = 'Dealer lost!';
+    }
+    else if(dealer.score > player.score || player.score > 21) {
+        player.money -= player.totalBet;
+        dealer.money += player.totalBet;
+
+        playerMsg.textContent = 'Player lost!';
+        dealerMsg.textContent = 'Dealer wins!';
+    }
+    else {
+        playerMsg.textContent = 'Draw!';
+        dealerMsg.textContent = 'Draw!';
+    }
+}
+
+function displayScore(players, endOfRound) {
     let message;
-    thePlayer === player ? message = `Player's score: ${thePlayer.visibleScore}` : message = `Dealer's (visible) score: ${thePlayer.visibleScore}`;
-    thePlayer.visibleScoreElement.textContent = message;
-    thePlayer.visibleScoreElement.classList.remove('hidden');
+    
+    players.forEach( thePlayer => {
+        if(!endOfRound) {
+            thePlayer === player ? message = `Player's score: ${thePlayer.visibleScore}` : message = `Dealer's (visible) score: ${thePlayer.visibleScore}`;
+    
+        }
+        else {
+            thePlayer === player ? message = `Player's final score: ${thePlayer.score}` : message = `Dealer's final score: ${thePlayer.score}`;
+        }
+    
+        thePlayer.visibleScoreElement.textContent = message;
+        thePlayer.visibleScoreElement.classList.remove('hidden');
+    });
 }
 
 function flipDealerCard() {
+    const flipCard = document.getElementById('flip-card');
 
+    if(flipCard === null) {
+        console.error("called flipDealerCard when cards haven't been dealt.");
+    }
+    else {
+        flipCard.classList.add('flip-card-turn');
+    }
 }
 
 /* Initial card dealing and card setup */
@@ -217,6 +259,7 @@ async function dealCards(cardsPerPlayer, players) {
             
             // Flip card
             if((thePlayer === dealer) && (cardsPerPlayer > 1) && (i === 0)) {
+                newCard.setAttribute('id', 'flip-card');
                 newCard.classList.add('flip-card');
 
                 // Setup the child class hierarchy for flip card
@@ -251,7 +294,7 @@ async function dealCards(cardsPerPlayer, players) {
             }, timeOut);
 
             // update player's visible score
-            displayScore(thePlayer)
+            displayScore([thePlayer], false)
 
             timeOut += 200;
 
@@ -262,6 +305,14 @@ async function dealCards(cardsPerPlayer, players) {
     });
 
     return Promise.resolve('cards have been dealt');
+}
+
+async function removeCards() {
+    // remove player cards
+    for(card of player.cardContainer.children) {
+        card.classList.add('remove-card');
+        await dealerWait(200);
+    }
 }
 
 // Helper method for simulate dealer taking some time before making a decision
@@ -371,10 +422,16 @@ dealBtn.addEventListener('click', () => {
     displayHitAndStand();
 });
 
-standBtn.addEventListener('click', () => {
+async function playerStand() {
     displayPlayerMsg(player, 'Stand');
-    dealerTurn();
-})
+    await dealerTurn();
+    flipDealerCard();
+    displayScore([player, dealer], true);
+    displayWinnerUpdateMoney();
+    displayBankBet();
+}
+
+standBtn.addEventListener('click', playerStand);
 
 function displayPlayerMsg(thePlayer, msg) {
     thePlayer.msgElement.classList.remove('hidden');
@@ -387,7 +444,11 @@ async function playerHit() {
     
     if(player.score > 21) {
         displayPlayerMsg(player, 'Bust!');
-        dealerTurn();
+        await dealerTurn();
+        flipDealerCard();
+        displayScore([player, dealer], true)
+        displayWinnerUpdateMoney();
+        displayBankBet();
     }
 }
 

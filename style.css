@@ -131,12 +131,18 @@ button {
     animation: slide 1s forwards;
 }
 
+.remove-card {
+    -webkit-animation: slide-out 1s forwards;
+    -moz-animation: slide-out 1s forwards;
+    animation: slide-out 1s forwards;
+}
+
 .flip-card {
     background-color: transparent;
     perspective: 1000px; /* Remove this if you don't want the 3D effect */
 }
 
-.flip-card:hover .flip-card-inner {
+.flip-card-turn .flip-card-inner {
     transform: rotateY(180deg);
 }
 
@@ -173,6 +179,7 @@ button {
     object-fit: scale-down;
 }
 
+/* Slide cards in */
 @-webkit-keyframes slide {
     0% {
       transform: translateX(900px);
@@ -195,6 +202,32 @@ button {
     }
     100% {
       transform: translateX(0);
+    }
+  }
+
+/* Slide cards out (to remove) */
+@-webkit-keyframes slide-out {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-900px);
+    }
+  }
+  @-moz-keyframes slide-out {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-900px);
+    }
+  }
+  @keyframes slide-out {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-900px);
     }
   }
 
