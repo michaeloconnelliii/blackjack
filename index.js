@@ -1,4 +1,4 @@
-// TODO: display who won round which will likely involve flipping dealer card, update $ and start new round (undoing hidden to things, etc)
+// TODO: Clean up js for oop methods, split and insurance scenarios. Figure out what to do with dealer money.
 
 /* Objects, Constructors, Prototypes */
 class Player {
@@ -119,6 +119,28 @@ function updateBet(betAmt) {
     player.totalBet += betAmt;
     player.money -= betAmt;
     return true;
+}
+
+// Used inbetween rounds. If player's previous bet is too high, then adjust it to match how much money they have
+function adjustPreviousBet() {
+    const chipAmts = [ 500, 100, 50, 25, 1 ];
+
+    // We need to reset the bet
+    if(player.money < player.bet) {
+        // clear out player's bet queue
+        while(player.bets.length > 0) {
+            player.bets.pop();
+        }
+
+        player.totalBet = 0;
+
+        // update player's bet queue to match their money amount
+        chipAmts.forEach( chipAmt => {
+            while(chipAmt <= player.money) {
+                updateBet(chipAmt);
+            }
+        });
+    }
 }
 
 // Displays appropriate number of chips. For example, if a user only has $4, a $1 chip will be displayed and no others 
@@ -453,6 +475,7 @@ async function playerStand() {
     displayWinnerUpdateMoney();
     displayBankBet();
     await dealerWait(2000);
+    adjustPreviousBet();
     await removeCards([player, dealer]);
     startRound();
 }
