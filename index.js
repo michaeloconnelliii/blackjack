@@ -121,12 +121,13 @@ function updateBet(betAmt) {
     return true;
 }
 
-// Used inbetween rounds. If player's previous bet is too high, then adjust it to match how much money they have
+// Used inbetween rounds. If player's previous bet is too high, then adjust it to match how much money they have.
+// This only occurs if player lost
 function adjustPreviousBet() {
     const chipAmts = [ 500, 100, 50, 25, 1 ];
 
     // We need to reset the bet
-    if(player.money < player.bet) {
+    if(player.money < player.totalBet) {
         // clear out player's bet queue
         while(player.bets.length > 0) {
             player.bets.pop();
@@ -212,12 +213,13 @@ function convertToValue(cardVal) {
 }
 
 function displayWinnerUpdateMoney() {
-    if(dealer.score < playerScore || dealer.score > 21) {
+    if(dealer.score < player.score || dealer.score > 21) {
         player.money += (player.totalBet * 2);
         dealer.money -= player.totalBet;
         
         playerMsg.textContent = 'Player wins!';
         dealerMsg.textContent = 'Dealer lost!';
+        return true;
     }
     else if(dealer.score > player.score || player.score > 21) {
         // Player money is moved from money to bet already
@@ -225,10 +227,12 @@ function displayWinnerUpdateMoney() {
 
         playerMsg.textContent = 'Player lost!';
         dealerMsg.textContent = 'Dealer wins!';
+        return false;
     }
     else {
         playerMsg.textContent = 'Draw!';
         dealerMsg.textContent = 'Draw!';
+        return true;
     }
 }
 
@@ -472,11 +476,13 @@ async function playerStand() {
     await dealerTurn();
     flipDealerCard();
     displayScore([player, dealer], true);
-    displayWinnerUpdateMoney();
+    const playerWin = displayWinnerUpdateMoney();
     displayBankBet();
     await dealerWait(2000);
-    adjustPreviousBet();
     await removeCards([player, dealer]);
+    if(!playerWin) {
+        adjustPreviousBet();
+    }
     startRound();
 }
 
