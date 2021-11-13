@@ -1,4 +1,6 @@
 // TODO: Clean up js for oop methods, split and insurance scenarios. Figure out what to do with dealer money.
+// let player set player and dealer money at the beginning of the game. Player wins when dealer money is all gone.
+// Shuffle deck at specific card remaining threshold
 
 /* Objects, Constructors, Prototypes */
 class Player {
