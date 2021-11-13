@@ -224,6 +224,7 @@ function displayWinnerUpdateMoney() {
     else if(dealer.score > player.score || player.score > 21) {
         // Player money is moved from money to bet already
         dealer.money += (player.totalBet * 2);
+        player.money -= player.totalBet;
 
         playerMsg.textContent = 'Player lost!';
         dealerMsg.textContent = 'Dealer wins!';
