@@ -54,11 +54,13 @@ class Deck {
 
 /* Global Objects */
 const playBtn = document.getElementById('play-btn');
+const playAgainBtn = document.getElementById('play-again-btn');
 const dealBtn = document.getElementById('deal-btn');
 const hitBtn = document.getElementById('hit-btn');
 const standBtn = document.getElementById('stand-btn');
 const frontPage = document.getElementById('front-page');
 const playModal = document.getElementById('play-modal');
+const gameOverModal = document.getElementById('game-over-modal');
 const bank = document.getElementById('bank-modal');
 const playerAmt = document.getElementById('player-amt');
 const playerBet = document.getElementById('player-bet');
@@ -142,6 +144,10 @@ function adjustPreviousBet() {
             }
         });
     }
+    // repeat previous bet
+    else {
+        player.money -= player.totalBet;
+    }
 }
 
 // Displays appropriate number of chips. For example, if a user only has $4, a $1 chip will be displayed and no others 
@@ -212,6 +218,14 @@ function convertToValue(cardVal) {
     return Number(cardValToScoreVal.hasOwnProperty(cardVal) ? cardValToScoreVal[cardVal] : cardVal);
 }
 
+/* Game is over once player runs out of money - this will be extended for dealer, too */
+function checkGameoverAndEnd() {
+    if(player.money <= 0 && player.totalBet <= 0) {
+        playModal.classList.add('hidden');
+        gameOverModal.classList.remove('hidden');
+    }
+}
+
 function displayWinnerUpdateMoney() {
     if(dealer.score < player.score || dealer.score > 21) {
         player.money += (player.totalBet * 2);
@@ -224,7 +238,6 @@ function displayWinnerUpdateMoney() {
     else if(dealer.score > player.score || player.score > 21) {
         // Player money is moved from money to bet already
         dealer.money += (player.totalBet * 2);
-        player.money -= player.totalBet;
 
         playerMsg.textContent = 'Player lost!';
         dealerMsg.textContent = 'Dealer wins!';
@@ -404,6 +417,13 @@ playBtn.addEventListener('click', () => {
     startGame();
 });
 
+/* Allow player to play again after game over */
+playAgainBtn.addEventListener('click', () => {
+    gameOverModal.classList.add('hidden');
+    player.bank = 2000;
+    startGame();
+});
+
 /* Increase bet */
 const bankChips = { 
     1: oneChips, 
@@ -483,6 +503,7 @@ async function playerStand() {
     await removeCards([player, dealer]);
     if(!playerWin) {
         adjustPreviousBet();
+        checkGameoverAndEnd();
     }
     startRound();
 }
