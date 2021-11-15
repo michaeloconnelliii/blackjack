@@ -25,6 +25,7 @@ class Deck {
         this.deckCount = deckCount;
         // when deck reaches less than half it needs to be shuffled
         this.minBeforeShuffled = (52 * deckCount) / 2;
+        this.splitCarArr = [];
     }
        
     async initDeck() {
@@ -587,6 +588,9 @@ async function splitPlayerHit() {
 
 async function splitPlayerStand() {
     displayPlayerMsg(player, 'Stand');
+
+    // stash away first hand
+    deck.prototype
 
     // let player start next hand (next split card)
 }
