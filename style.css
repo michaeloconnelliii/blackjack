@@ -295,6 +295,10 @@ button {
     background: blue;
 }
 
+.split-btn {
+    background: black;
+}
+
 #player-amt, #player-bet, .player-visible-score, .player-msg, .dealer-msg {
     width: auto;
     max-width: 200px;

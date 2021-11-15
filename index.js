@@ -1,6 +1,6 @@
 // TODO: Clean up js for oop methods, split and insurance scenarios. Figure out what to do with dealer money.
 // let player set player and dealer money at the beginning of the game. Player wins when dealer money is all gone.
-// Shuffle deck at specific card remaining threshold
+// Doubling bet 
 
 /* Objects, Constructors, Prototypes */
 class Player {
@@ -11,6 +11,7 @@ class Player {
         this.visibleScore = 0;
         this.bets = [];
         this.totalBet = 0;
+        this.cards = [];
 
         /* unique elements */
         this.cardContainer = playersCardContainer;
@@ -62,6 +63,7 @@ const playAgainBtn = document.getElementById('play-again-btn');
 const dealBtn = document.getElementById('deal-btn');
 const hitBtn = document.getElementById('hit-btn');
 const standBtn = document.getElementById('stand-btn');
+const splitBtn = document.getElementById('split-btn');
 const frontPage = document.getElementById('front-page');
 const playModal = document.getElementById('play-modal');
 const gameOverModal = document.getElementById('game-over-modal');
@@ -103,6 +105,13 @@ function displayHitAndStand() {
     standBtn.classList.remove('hidden');
 }
 
+function checkForSplit() {
+    console.log(player.cards);
+    const playerHasEnoughMoney = (player.money >= (player.totalBet * 2));
+    const cardsHaveSameVal = (convertToValue(player.cards[0].value) === convertToValue(player.cards[1].value))
+    return playerHasEnoughMoney && cardsHaveSameVal;
+}
+
 // Update bet amount for Player if the bet is possible, don't do anything if it isn't
 // Remove a bet from the player's bets queue if bet is negative (player selected bet from bet counter to remove)
 function updateBet(betAmt) {
@@ -115,7 +124,7 @@ function updateBet(betAmt) {
     if(betAmt < 0) {
         // bets queue only has positive amounts, look up abs value
         let index = player.bets.indexOf(Math.abs(betAmt));
-        player.bets.splice(index, 1)
+        player.bets.splice(index, 1);
     }
     // player chose to place bet from player corner
     else {
@@ -260,7 +269,6 @@ function displayScore(players, endOfRound) {
     players.forEach( thePlayer => {
         if(!endOfRound) {
             thePlayer === player ? message = `Player's score: ${thePlayer.visibleScore}` : message = `Dealer's (visible) score: ${thePlayer.visibleScore}`;
-    
         }
         else {
             thePlayer === player ? message = `Player's final score: ${thePlayer.score}` : message = `Dealer's final score: ${thePlayer.score}`;
@@ -297,6 +305,9 @@ async function dealCards(cardsPerPlayer, players) {
         for(let i = 0; i < cardsPerPlayer; i++) {
             // a card from the api call
             const theCard = cards.pop();
+            
+            // store the card in player's card array for other uses (checking for split, insurance, etc.)
+            thePlayer.cards.push(theCard);
             
             // Create the card
             const newCard = document.createElement('div');
@@ -356,6 +367,13 @@ async function dealCards(cardsPerPlayer, players) {
     }
 
     return Promise.resolve('cards have been dealt');
+}
+
+function clearCardArr(players) {
+    players.forEach( thePlayer => {
+        // clear out the array
+        thePlayer.cards.splice(0, thePlayer.cards.length);
+    });
 }
 
 async function removeCards(players) {
@@ -493,14 +511,21 @@ function enableDecreaseBet(allow) {
     }
 }
 
-/* Initial Deal Cards */
-dealBtn.addEventListener('click', () => {
-    dealCards(2, [player, dealer]);
+async function dealAction() {
+    clearCardArr([player, dealer]);
+    await dealCards(2, [player, dealer]);
     bank.classList.add('hidden');
     hideDealBtn(true);
     // Undo ability to remove chips
     enableDecreaseBet(false);
     displayHitAndStand();
+    // checkForSplit, displaySplit
+    console.log(checkForSplit());
+}
+
+/* Initial Deal Cards */
+dealBtn.addEventListener('click', () => {
+    dealAction();
 });
 
 async function playerStand() {
@@ -544,3 +569,59 @@ async function playerHit() {
 
 /* Hit */
 hitBtn.addEventListener('click', playerHit);
+
+async function splitPlayerHit() {
+    await dealCards(1, [player]);
+    
+    if(player.score > 21) {
+        displayPlayerMsg(player, 'Bust!');
+        await dealerTurn();
+        flipDealerCard();
+        displayScore([player, dealer], true)
+        displayWinnerUpdateMoney();
+        displayBankBet();
+        dealerWait(1500);
+        removeCards([player, dealer]);
+    }
+}
+
+async function splitPlayerStand() {
+    displayPlayerMsg(player, 'Stand');
+    await dealerTurn();
+    flipDealerCard();
+    displayScore([player, dealer], true);
+    const playerWin = displayWinnerUpdateMoney();
+    displayBankBet();
+    await dealerWait(2000);
+    await removeCards([player, dealer]);
+    if(!playerWin) {
+        adjustPreviousBet();
+        checkGameoverAndEnd();
+    }
+    startRound();
+}
+
+async function split() {
+    // bet is temporarily doubled
+    const betAmt = player.totalBet * 2;
+
+    // temporarily remove one of the cards
+    const tempCardVal = convertToValue(player.cards[1].value);
+    const tempCard = player.cardContainer.children[1];
+    tempCard.classList.add('remove-card');
+    await dealerWait(500);
+    player.cardContainer.children[1].remove();
+
+    // update score
+    player.visibleScore -= tempCardVal;
+    player.score -= tempCardVal;
+    displayScore([player], false);
+
+    // update event listeners for hit and stand
+    hitBtn.removeEventListener('click', playerHit);
+    standBtn.removeEventListener('click', playerStand);
+
+}
+
+/* Split */
+splitBtn.addEventListener('click', split);
