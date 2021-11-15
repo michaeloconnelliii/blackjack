@@ -587,18 +587,8 @@ async function splitPlayerHit() {
 
 async function splitPlayerStand() {
     displayPlayerMsg(player, 'Stand');
-    await dealerTurn();
-    flipDealerCard();
-    displayScore([player, dealer], true);
-    const playerWin = displayWinnerUpdateMoney();
-    displayBankBet();
-    await dealerWait(2000);
-    await removeCards([player, dealer]);
-    if(!playerWin) {
-        adjustPreviousBet();
-        checkGameoverAndEnd();
-    }
-    startRound();
+
+    // let player start next hand (next split card)
 }
 
 async function split() {
@@ -616,6 +606,10 @@ async function split() {
     player.visibleScore -= tempCardVal;
     player.score -= tempCardVal;
     displayScore([player], false);
+
+    // give player card for first hand
+    displayPlayerMsg(player, 'Split hand (1/2)');
+    await dealCards(1, [player]);
 
     // update event listeners for hit and stand
     hitBtn.removeEventListener('click', playerHit);
