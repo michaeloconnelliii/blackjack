@@ -22,6 +22,8 @@ class Player {
 class Deck {
     constructor(deckCount) {
         this.deckCount = deckCount;
+        // when deck reaches less than half it needs to be shuffled
+        this.minBeforeShuffled = (52 * deckCount) / 2;
     }
        
     async initDeck() {
@@ -345,6 +347,13 @@ async function dealCards(cardsPerPlayer, players) {
             displayCardNum();
         }
     });
+
+    // Check if deck needs to be shuffled
+    if(deck.cardsRemaining <= deck.minBeforeShuffled) {
+        await deck.shuffle();
+        displayCardNum();
+        cardAmt.textContent += '\n(Shuffled)';
+    }
 
     return Promise.resolve('cards have been dealt');
 }
