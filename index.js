@@ -293,12 +293,14 @@ function flipDealerCard() {
     }
 }
 
-/* Initial card dealing and card setup */
-async function dealCards(cardsPerPlayer, players) {
-    // deal numCards per player
-    const numPlayers = players.length;
-    const cards = await deck.drawCards(cardsPerPlayer * numPlayers);
-    
+/* card dealing and card setup */
+async function dealCards(cardsPerPlayer, players, cards) {
+    if(cards === undefined) {
+        // deal numCards per player
+        const numPlayers = players.length;
+        cards = await deck.drawCards(cardsPerPlayer * numPlayers);
+    }
+
     console.log(cards);
     
     // delay for dealing cards
@@ -573,7 +575,7 @@ async function playerHit() {
 /* Hit */
 hitBtn.addEventListener('click', playerHit);
 
-async function splitPlayerHit() {
+async function splitPlayerHit(evt) {
     await dealCards(1, [player]);
     
     if(player.score > 21) {
@@ -588,13 +590,32 @@ async function splitPlayerHit() {
     }
 }
 
-async function splitPlayerStand() {
-    displayPlayerMsg(player, 'Stand');
+async function splitPlayerStand(evt) {
+    if(!evt.currentTarget.secondHand) {
+        displayPlayerMsg(player, 'Stand');
 
-    // stash away first hand
-    deck.prototype
+        console.log(deck.splitCardArr);
+        console.log(player.cards);
+        
+        // stash away first hand
+        while(player.cards.length > 0) {
+            deck.splitCardArr.push(player.cards.pop());
+        }
 
-    // let player start next hand (next split card)
+        // remove the cards
+        player.score = 0;
+        player.visibleScore = 0;
+        await removeCards([player]);
+
+        // let player start next hand (next split card)
+        dealCards(1, [player], [deck.splitCardArr[0]]);
+
+        displayPlayerMsg(player, 'Split hand (2/2)');
+        hitBtn.secondHand = true;
+        standBtn.secondHand = true;
+    } else {
+        console.log('on second hand');
+    }
 }
 
 async function split() {
@@ -606,8 +627,10 @@ async function split() {
     const tempCard = player.cardContainer.children[1];
     tempCard.classList.add('remove-card');
     await dealerWait(500);
-    console.log(player.cards);
     player.cardContainer.children[1].remove();
+
+    deck.splitCardArr.push(player.cards[1]);
+    player.cards.pop();
 
     // update score
     player.visibleScore -= tempCardVal;
@@ -622,6 +645,11 @@ async function split() {
     hitBtn.removeEventListener('click', playerHit);
     standBtn.removeEventListener('click', playerStand);
 
+    hitBtn.addEventListener('click', splitPlayerHit);
+    standBtn.addEventListener('click', splitPlayerStand);
+
+    hitBtn.secondHand = false;
+    standBtn.secondHand = false;
 }
 
 /* Split */
