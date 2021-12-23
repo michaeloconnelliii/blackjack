@@ -1,6 +1,7 @@
 // TODO: Clean up js for oop methods, split and insurance scenarios. Figure out what to do with dealer money.
 // let player set player and dealer money at the beginning of the game. Player wins when dealer money is all gone.
 // Doubling bet 
+// Determine how to effectively split cards
 
 /* Objects, Constructors, Prototypes */
 class Player {
@@ -25,7 +26,8 @@ class Deck {
         this.deckCount = deckCount;
         // when deck reaches less than half it needs to be shuffled
         this.minBeforeShuffled = (52 * deckCount) / 2;
-        this.splitCarArr = [];
+        this.splitCard = null;
+        this.splitCardArr = [];
     }
        
     async initDeck() {
@@ -604,6 +606,7 @@ async function split() {
     const tempCard = player.cardContainer.children[1];
     tempCard.classList.add('remove-card');
     await dealerWait(500);
+    console.log(player.cards);
     player.cardContainer.children[1].remove();
 
     // update score
