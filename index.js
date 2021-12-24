@@ -1,7 +1,7 @@
 // TODO: Clean up js for oop methods, split and insurance scenarios. Figure out what to do with dealer money.
 // let player set player and dealer money at the beginning of the game. Player wins when dealer money is all gone.
 // Doubling bet 
-// Determine how to effectively split cards
+// Determine how to effectively split cards - wrap up second hand
 
 /* Objects, Constructors, Prototypes */
 class Player {
@@ -13,6 +13,10 @@ class Player {
         this.bets = [];
         this.totalBet = 0;
         this.cards = [];
+        
+        /* splitting stats */
+        this.secondHand = false;
+        this.firstHandBust = false;
 
         /* unique elements */
         this.cardContainer = playersCardContainer;
@@ -243,7 +247,7 @@ function checkGameoverAndEnd() {
 }
 
 function displayWinnerUpdateMoney() {
-    if(dealer.score < player.score || dealer.score > 21) {
+    if(((dealer.score < player.score) && player.score <= 21) || dealer.score > 21) {
         player.money += (player.totalBet * 2);
         dealer.money -= player.totalBet;
         
@@ -251,7 +255,7 @@ function displayWinnerUpdateMoney() {
         dealerMsg.textContent = 'Dealer lost!';
         return true;
     }
-    else if(dealer.score > player.score || player.score > 21) {
+    else if(((dealer.score > player.score) && dealer.score <= 21) || player.score > 21) {
         // Player money is moved from money to bet already
         dealer.money += (player.totalBet * 2);
 
@@ -541,12 +545,25 @@ async function playerStand() {
     const playerWin = displayWinnerUpdateMoney();
     displayBankBet();
     await dealerWait(2000);
-    await removeCards([player, dealer]);
+    
+    // only remove player cards on a split
+    if(!player.secondHand) {
+        await removeCards([player, dealer]);
+    } else {
+        await removeCards([player]);
+    }
+
     if(!playerWin) {
         adjustPreviousBet();
         checkGameoverAndEnd();
     }
-    startRound();
+
+    // don't start round if calling this from split
+    if(!player.secondHand) {
+        startRound();
+    } else {
+        player.secondHand = false;
+    }
 }
 
 standBtn.addEventListener('click', playerStand);
@@ -565,33 +582,55 @@ async function playerHit() {
         await dealerTurn();
         flipDealerCard();
         displayScore([player, dealer], true)
-        displayWinnerUpdateMoney();
+        const playerWin = displayWinnerUpdateMoney();
         displayBankBet();
-        dealerWait(1500);
+        await dealerWait(1500);
         removeCards([player, dealer]);
+
+        if(!playerWin) {
+            adjustPreviousBet();
+            checkGameoverAndEnd();
+        }
+
+        startRound();
     }
 }
 
 /* Hit */
 hitBtn.addEventListener('click', playerHit);
 
-async function splitPlayerHit(evt) {
+async function splitPlayerHit() {
     await dealCards(1, [player]);
+    await dealerWait(1500);
     
     if(player.score > 21) {
         displayPlayerMsg(player, 'Bust!');
-        await dealerTurn();
-        flipDealerCard();
-        displayScore([player, dealer], true)
-        displayWinnerUpdateMoney();
-        displayBankBet();
-        dealerWait(1500);
-        removeCards([player, dealer]);
+        displayScore([player], true);
+        await removeCards([player]);
+
+        // reset score for first hand
+        player.score = 0;
+        player.visibleScore = 0;
+
+        if(!player.secondHand) {
+            player.money -= player.totalBet;
+            displayBankBet();
+
+            // let player start next hand (next split card)
+            await dealCards(1, [player], [deck.splitCardArr[0]]);
+            displayPlayerMsg(player, 'Split hand (2/2)');
+            player.secondHand = true;
+            player.firstHandBust = true;
+
+            // update event listeners
+            hitBtn.removeEventListener('click', splitPlayerHit);
+            hitBtn.addEventListener('click', playerHit);
+        }
     }
 }
 
-async function splitPlayerStand(evt) {
-    if(!evt.currentTarget.secondHand) {
+async function splitPlayerStand() {
+    if(!player.secondHand) {
         displayPlayerMsg(player, 'Stand');
 
         console.log(deck.splitCardArr);
@@ -606,15 +645,43 @@ async function splitPlayerStand(evt) {
         player.score = 0;
         player.visibleScore = 0;
         await removeCards([player]);
+        deck.splitCardArr.shift();
 
         // let player start next hand (next split card)
         dealCards(1, [player], [deck.splitCardArr[0]]);
 
         displayPlayerMsg(player, 'Split hand (2/2)');
-        hitBtn.secondHand = true;
-        standBtn.secondHand = true;
+        
+        player.secondHand = true;
     } else {
-        console.log('on second hand');
+        
+        // if player busted on first hand, don't circle back to it
+        if(!player.firstHandBust) {
+            // cash out second hand
+            await playerStand();
+
+            // reset score for first hand
+            player.score = 0;
+            player.visibleScore = 0;
+            displayPlayerMsg(player, 'Split hand (1/2)');
+            
+            // lay down first hand
+            dealCards(deck.splitCardArr.length, [player], deck.splitCardArr);
+            
+            // cash out first hand
+            await playerStand();
+        } else {
+            player.secondHand = false;
+            
+            // cash out second hand
+            await playerStand();
+        }
+
+        // update event listeners
+
+        // update player split attributes
+        player.secondHand = false;
+        player.firstHandBust = false;
     }
 }
 
@@ -648,8 +715,7 @@ async function split() {
     hitBtn.addEventListener('click', splitPlayerHit);
     standBtn.addEventListener('click', splitPlayerStand);
 
-    hitBtn.secondHand = false;
-    standBtn.secondHand = false;
+    player.secondHand = false;
 }
 
 /* Split */
