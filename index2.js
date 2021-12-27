@@ -209,32 +209,47 @@ class Game {
 
     /* Helper method for enableDecreaseBet s.t. we can reference the method when removing the event listeners
        
-       Note that amt is passed in via bind() in enableDecreaseBet 
+       Note that amt is passed in via bind() in enableBet 
        See https://stackoverflow.com/questions/256754/how-to-pass-arguments-to-addeventlistener-listener-function for reference */
-    updateBetDisplayInfo(amt) {
-        this.player.updateBet(Number(-amt));
+    updateBetDisplayInfo(amt, increase) {
+        increase ? this.player.updateBet(Number(amt)) : this.player.updateBet(Number(-amt));
         this.player.displayInfo();
     }
 
-    /* For adding and removing ability to remove bets from the dealer counter because
-       we don't want player to do this once cards are dealt. 
+    /* For adding and removing ability to add/remove bets from the dealer counter or player corner so player cannot bet/remove bet
+       at specific game states. For example, we don't want player to do this once cards are dealt. 
        
-       The 'select' class changes cursor to pointer */
-    enableDecreaseBet(allow) {
-        Object.entries(this.player.betChipContainer).forEach( (pair) => {
+       Note: The 'select' class changes cursor to pointer */
+    enableBet(allow, increase) {
+        let chipContainer;
+        increase ? chipContainer = this.player.bankChipContainer : chipContainer = this.player.betChipContainer;
+
+        Object.entries(chipContainer).forEach( (pair) => {
             const [ amt, chip ] = pair;
             chip.amt = amt;
             
             if(allow) {
                 chip.classList.add('select');
-                chip.addEventListener('click', this.updateBetDisplayInfo.bind(this, amt));
+                if(increase) {
+                    chip.addEventListener('click', this.updateBetDisplayInfo.bind(this, amt, true));
+                }
+                else {
+                    chip.addEventListener('click', this.updateBetDisplayInfo.bind(this, amt, false));
+                }
             }
             else {
                 chip.classList.remove('select');
                 chip.removeEventListener('click', this.updateBetDisplayInfo);
             }
-
         });
+    }
+
+    enableDecreaseBet(allow) {
+        this.enableBet(allow, false);
+    }
+
+    enableIncreaseBet(allow) {
+        this.enableBet(allow, true);
     }
 
     displayCardNum() {
@@ -250,8 +265,10 @@ class Game {
         this.hideDealBtn();
         addRemoveHiddenClass([this.player.msgElement, this.dealer.msgElement, this.player.visibleScoreElement, this.dealer.visibleScoreElement], 
                         [dealBtn, bank]);
-
+        
         this.enableDecreaseBet(true);
+        this.enableIncreaseBet(true);
+        
         this.displayCardNum();
     }
 
