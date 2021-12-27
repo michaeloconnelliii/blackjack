@@ -207,13 +207,16 @@ class Game {
         this.player.totalBet <= 0 ? dealBtn.classList.add('hidden') : dealBtn.classList.remove('hidden');
     }
 
-    /* Helper method for enableDecreaseBet s.t. we can reference the method when removing the event listeners
+    /* Helper method for enableBet s.t. we can reference the method when removing the event listeners
        
        Note that amt is passed in via bind() in enableBet 
        See https://stackoverflow.com/questions/256754/how-to-pass-arguments-to-addeventlistener-listener-function for reference */
     updateBetDisplayInfo(amt, increase) {
         increase ? this.player.updateBet(Number(amt)) : this.player.updateBet(Number(-amt));
         this.player.displayInfo();
+
+        // Hide the deal button if player has removed all their bets from the betting counter
+        this.hideDealBtn();
     }
 
     /* For adding and removing ability to add/remove bets from the dealer counter or player corner so player cannot bet/remove bet
@@ -320,6 +323,11 @@ let blackjack = new Game(startingMoney, startingDecks);
 /* Event Handlers */
 playBtn.addEventListener('click', () => {
     blackjack.startGame();
+});
+
+/* Initial Deal Cards */
+dealBtn.addEventListener('click', () => {
+    blackjack.dealAction();
 });
 
 /* Game loop */
