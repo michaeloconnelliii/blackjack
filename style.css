@@ -234,7 +234,8 @@ button {
 .test {
     width: 100px;
     height: 100px;
-    background: pink;
+    background: darkgreen;
+    color: white;
 }
 
 .bet-container {
