@@ -73,8 +73,63 @@ class Player {
         this.bankChipContainer = bankChipContainer;
     }
 
-    /* Updates players bet (both the bets queue and totalBet). Returns true or false whether successful.
+    displayInfo() {
+        this.displayBankAndBet();
+        this.displayBetChips();
+        this.displayBankChips();
+        
+        console.log(this.money);        
+    }
+
+    // Display player's score or visible score after a message
+    displayScore(message, displayVisibleScore) {
+        const scoreToDisplay = displayVisibleScore ? this.visibleScore : this.score;
+        
+        message = message + String(scoreToDisplay)
+        this.visibleScoreElement.textContent = message;
+        this.visibleScoreElement.classList.remove('hidden');
+    }
+
+    updateScores(score, visibleScore) {
+        this.score = score;
+        this.visibleScore = visibleScore;
+    }
+
+    /* Update player's score and visible score attributes based on values from cards in cards array.
        
+       Score is calculated as the sum of all card values.
+       Visible score is calculated as the sum of all card values except the first card. */
+    updateScoresFromCards() {
+        let addVisibleScore = false;
+        
+        // Reset our score and visible score
+        this.score = 0;
+        this.visibleScore = 0;
+
+        // Add up our card values and add to our score and visibleScore
+        this.cards.forEach( theCard => {
+            const highAce = Deck.isHighAce(this.score);
+            const cardVal = Deck.convertCardValue(theCard.value, highAce);
+            
+            // First card is invisble to other player, so add all cards but the first
+            // addVisibleScore will only be false once on the first card value
+            const visibleScoreVal = addVisibleScore ? cardVal : 0;
+            addVisibleScore = true;
+            const visibleScore = this.visibleScore + visibleScoreVal;
+            const score = this.score + cardVal;
+            
+            this.updateScores(score, visibleScore);
+        });
+    }
+
+    // Update bank and bet amount in HTML
+    displayBankAndBet() {
+        this.amtElement.textContent = `Player Bank: $${this.money}`;
+        this.betElement.textContent = `Bet: $${this.totalBet}`;
+    }
+
+    /* Updates players bet (both the bets queue and totalBet). Returns true or false whether successful.
+    
        betAmt can be positive or negative (adding/removing chips from betting table). */
     updateBet(betAmt) {
         // player attempted to bet more than they had
@@ -98,22 +153,6 @@ class Player {
         return true;
     }
 
-    resetScore(score, visibleScore) {
-        if(score) {
-            this.score = 0;
-        }
-
-        if(visibleScore) {
-            this.visibleScore = 0;
-        }
-    }
-
-    // Update bank and bet amount in HTML
-    displayBankAndBet() {
-        this.amtElement.textContent = `Player Bank: $${this.money}`;
-        this.betElement.textContent = `Bet: $${this.totalBet}`;
-    }
-
     // Displays player's betting chips they've selected
     displayBetChips() {
         for(const amt in this.betChipContainer) {
@@ -133,12 +172,60 @@ class Player {
         }
     }
 
-    displayInfo() {
-        this.displayBankAndBet();
-        this.displayBetChips();
-        this.displayBankChips();
-        
-        console.log(this.money);        
+    clearCardArr() {
+        // clear out the array
+        this.cards.splice(0, this.cards.length);
+    }
+
+    /* Use cards array to animate dealing out/displaying cards by creating the "card" HTML element and styling it
+       using the image recieved from card API.
+       
+       Time appending the cards to card container to give the effect of sliding cards one by one into a player's container
+       rather than all of the cards sliding at once. */
+    displayCards(numCards, flipFirstCard, cards) {
+        // delay for dealing cards
+        let timeOut = 0;
+
+        for(let i = 0; i < numCards; i++) {
+            const theCard = cards.shift();
+            console.log(theCard);
+            
+            // Create the card
+            const newCard = document.createElement('div');
+            
+            // Flip card so value is hidden (back of card is shown)
+            if((flipFirstCard) && (i === 0)) {
+                newCard.setAttribute('id', 'flip-card');
+                newCard.classList.add('flip-card');
+
+                // Setup the child class hierarchy for flip card
+                const innerCard = document.createElement('div');
+                const flipCardFront = document.createElement('div');
+                const flipCardBack = document.createElement('div');
+                
+                innerCard.classList.add('flip-card-inner');
+                flipCardFront.classList.add('flip-card-front');
+                flipCardBack.classList.add('flip-card-back');
+                flipCardBack.style.backgroundImage = `url(${theCard.image})`;
+
+                newCard.appendChild(innerCard);
+                innerCard.appendChild(flipCardFront);
+                innerCard.appendChild(flipCardBack);
+            }
+            else {
+                newCard.style.backgroundImage = `url(${theCard.image})`;
+            }
+
+            newCard.classList.add('card');
+
+            // setTimeout so all the cards don't appear at once. Give a small time window between sliding each card
+            timeOut += 200;
+
+            // put cards in player/dealer area
+            setTimeout(() => {
+                this.cardContainer.appendChild(newCard); 
+            }, timeOut);
+        }
     }
 }
 
@@ -177,7 +264,26 @@ class Deck {
             console.error('Failed to draw cards.');
         }
         this.cardsRemaining = result.data.remaining;
-        return result.data.cards;
+        return Promise.resolve(result.data.cards);
+    }
+
+    static isHighAce(currentPlayerScore) {
+        return currentPlayerScore + 11 > 21;
+    }
+
+    /* Convert abstract non-numerical (king, jack, queen. etc) values and all other value strings (1, 2, 3, etc) to numerical (Number) values */
+    static convertCardValue(cardVal, highAce) {
+        if(highAce === undefined) highAce = false;
+
+        const cardValToScoreVal = {
+            'ACE': (highAce ? 1 : 11),
+            'KING': 10,
+            'QUEEN': 10,
+            'JOKER': 10,
+            'JACK': 10
+        }
+
+        return Number(cardValToScoreVal.hasOwnProperty(cardVal) ? cardValToScoreVal[cardVal] : cardVal);
     }
 }
 
@@ -262,8 +368,10 @@ class Game {
     startRound() {
         this.player.displayInfo();
         
-        this.player.resetScore(true, true);
-        this.dealer.resetScore(true, true);
+        const score = 0;
+        const visibleScore = 0;
+        this.player.updateScores(score, visibleScore);
+        this.dealer.updateScores(score, visibleScore);
 
         this.hideDealBtn();
         addRemoveHiddenClass([this.player.msgElement, this.dealer.msgElement, this.player.visibleScoreElement, this.dealer.visibleScoreElement], 
@@ -278,6 +386,81 @@ class Game {
     async startGame() {
         await this.initGame();
         this.startRound();
+    }
+
+    /* === Card dealing methods === */
+
+    // Reshuffle our deck object if we get too low on cards and update user the deck has been shuffled
+    async checkReshuffle() {
+        if(this.deck.cardsRemaining <= this.deck.minBeforeShuffled) {
+            await this.deck.shuffle();
+            this.displayCardNum();
+            // let user know the deck has been shuffled by updating the card amount HTML element
+            cardAmt.textContent += '\n(Shuffled)';
+        }
+    }
+
+    /* Display the cards that were drawn/selected and update Deck after each deal. 
+       
+       displayCards and player.cards are seperate arrays so cards can be added one at a time (e.g. hitting)
+       to the existing HTML card elements, rather than having to put all of them in the container after each hit. */
+    async dealCards(players, cardsPerPlayer, cards) {
+        // Display the provided/drawn cards and update player attributes based on card values
+        players.forEach( thePlayer => {
+            // Draw appropriate number of cards from the pile to deal to each player
+            let displayCards = [];
+            for(let i = 0; i < cardsPerPlayer; i++) {
+                const card = cards.pop();
+                
+                thePlayer.cards.push(card);
+                displayCards.push(card)
+            }
+
+            // Flip dealer's first card so only the back is showing
+            const flipFirstCard = thePlayer === this.dealer;
+            thePlayer.displayCards(cardsPerPlayer, flipFirstCard, displayCards);
+
+            // update score and visible score based on card values
+            thePlayer.updateScoresFromCards();
+
+            // update player's score HTML element
+            let message;
+            let displayVisibleScore;
+            
+            if(thePlayer === this.dealer) {
+                message = "Dealer's (visible) score: ";
+                displayVisibleScore = true;
+            } else {
+                message = "Player's score: ";
+                displayVisibleScore = false;
+            }
+
+            thePlayer.displayScore(message, displayVisibleScore);
+            this.displayCardNum();
+        });
+    
+        // Check if deck needs to be shuffled after dealing cards
+        this.checkReshuffle();
+    }
+
+    /* Initial card dealing where dealer gets 2 cards and player gets 2 cards.
+       
+       Clear out both player and dealer card arrays, deal 2 cards each, remove the deal button and chips to add, add
+       hit and stand button and disable removing chips from the table. */
+    async dealAction() {
+        // Clear out existing card objects in player/dealers hand
+        this.player.clearCardArr();
+        this.dealer.clearCardArr();
+
+        // 4 cards will be dealt: 2 for player, 2 for dealer
+        this.deck.drawCards(4).then( cards => {
+            this.dealCards([this.dealer, this.player], 2, cards);
+        });
+        
+        addRemoveHiddenClass([bank, dealBtn], [hitBtn, standBtn]);
+        
+        // Undo ability to remove chips
+        this.enableDecreaseBet(false);        
     }
 }
 
