@@ -1,7 +1,5 @@
-// TODO: Clean up js for oop methods, split and insurance scenarios. Figure out what to do with dealer money.
-// let player set player and dealer money at the beginning of the game. Player wins when dealer money is all gone.
-// Doubling bet 
-// Determine how to effectively split cards - wrap up second hand
+/* Oppertunities for improvement:
+   - Add splitting, insurance, doubling capabilities */
 
 /* Global Objects */
 const playBtn = document.getElementById('play-btn');
@@ -95,6 +93,10 @@ class Player {
         this.visibleScore = visibleScore;
     }
 
+    updateMsgElementContent(msg) {
+        this.msgElement.textContent = msg;
+    }
+
     /* Update player's score and visible score attributes based on values from cards in cards array.
        
        Score is calculated as the sum of all card values.
@@ -153,6 +155,34 @@ class Player {
         return true;
     }
 
+    /* Used in between rounds. If player's previous bet is too high, then adjust it to match how much money they have.
+       
+       This only occurs if player lost */
+    adjustPreviousBet() {
+        const chipAmts = [ 500, 100, 50, 25, 1 ];
+
+        // We need to reset the bet
+        if(this.money < this.totalBet) {
+            // clear out player's bet queue
+            while(this.bets.length > 0) {
+                this.bets.pop();
+            }
+
+            this.totalBet = 0;
+
+            // update player's bet queue to match their money amount
+            chipAmts.forEach( chipAmt => {
+                while(chipAmt <= this.money) {
+                    updateBet(chipAmt);
+                }
+            });
+        }
+        // repeat previous bet
+        else {
+            this.money -= this.totalBet;
+        }
+    }
+
     // Displays player's betting chips they've selected
     displayBetChips() {
         for(const amt in this.betChipContainer) {
@@ -188,7 +218,6 @@ class Player {
 
         for(let i = 0; i < numCards; i++) {
             const theCard = cards.shift();
-            console.log(theCard);
             
             // Create the card
             const newCard = document.createElement('div');
@@ -315,14 +344,20 @@ class Game {
 
     /* Helper method for enableBet s.t. we can reference the method when removing the event listeners
        
-       Note that amt is passed in via bind() in enableBet 
-       See https://stackoverflow.com/questions/256754/how-to-pass-arguments-to-addeventlistener-listener-function for reference */
-    updateBetDisplayInfo(amt, increase) {
-        increase ? this.player.updateBet(Number(amt)) : this.player.updateBet(Number(-amt));
-        this.player.displayInfo();
+       Note that amt, increase, and our game instance are passed via the chipContainer because these are inaccessible from our
+       chip container this method is added to */
+    updateBetDisplayInfo(e) {
+        const amt = e.target.parentNode.amt;
+        const increase = e.target.parentNode.increase;
+        const game = e.target.parentNode.game;
+        const player = game.player;
+
+        console.log(game);
+        increase ? player.updateBet(Number(amt)) : player.updateBet(Number(-amt));
+        player.displayInfo();
 
         // Hide the deal button if player has removed all their bets from the betting counter
-        this.hideDealBtn();
+        game.hideDealBtn();
     }
 
     /* For adding and removing ability to add/remove bets from the dealer counter or player corner so player cannot bet/remove bet
@@ -335,16 +370,16 @@ class Game {
 
         Object.entries(chipContainer).forEach( (pair) => {
             const [ amt, chip ] = pair;
-            chip.amt = amt;
-            
+
+            console.log(chip);
+
             if(allow) {
+                chip.amt = amt;
+                chip.increase = increase;
+                chip.game = this;
+
                 chip.classList.add('select');
-                if(increase) {
-                    chip.addEventListener('click', this.updateBetDisplayInfo.bind(this, amt, true));
-                }
-                else {
-                    chip.addEventListener('click', this.updateBetDisplayInfo.bind(this, amt, false));
-                }
+                chip.addEventListener('click', this.updateBetDisplayInfo);
             }
             else {
                 chip.classList.remove('select');
@@ -361,8 +396,51 @@ class Game {
         this.enableBet(allow, true);
     }
 
+    // Helper method to determine winner for displayWinner() and updateMoneyFromWinner()
+    determineWinner() {
+        if(((this.dealer.score < this.player.score) && this.player.score <= 21) || this.dealer.score > 21) {            
+            return 'Player';
+        } else if(((this.dealer.score > this.player.score) && this.dealer.score <= 21) || this.player.score > 21) {
+            return 'Dealer';
+        } else {
+            return 'Draw';
+        }
+    }
+
+    displayWinner() {
+        const winner = this.determineWinner();
+
+        if(winner === 'Player') {
+            this.player.updateMsgElementContent('Player wins!');
+            this.dealer.updateMsgElementContent('Dealer lost!');
+        } else if(winner === 'Dealer') {
+            this.player.updateMsgElementContent('Player lost!');
+            this.dealer.updateMsgElementContent('Dealer wins!');
+        } else {
+            this.player.updateMsgElementContent('Draw!');
+            this.dealer.updateMsgElementContent('Draw!');
+        }
+    }
+
+    updateMoney() {
+        const winner = this.determineWinner();
+
+        if(winner === 'Player') {
+            this.player.money += (this.player.totalBet);
+            this.dealer.money -= this.player.totalBet;
+        } else if(winner === 'Dealer') {
+            // Player money is moved from money to bet already
+            this.dealer.money += (this.player.totalBet);
+        }
+    }
+
     displayCardNum() {
         cardAmt.textContent = `Cards Remaining: ${this.deck.cardsRemaining}`;
+    }
+
+    // Helper method for simulate taking some time before making a decision. Used because JS doesn't support sleep or other CPU blocker.
+    wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     startRound() {
@@ -386,6 +464,84 @@ class Game {
     async startGame() {
         await this.initGame();
         this.startRound();
+    }
+
+    // Visually flip the dealer card making it visible to user
+    flipDealerCard() {
+        const flipCard = document.getElementById('flip-card');
+    
+        if(flipCard === null) {
+            console.error("called flipDealerCard when cards haven't been dealt.");
+        }
+        else {
+            flipCard.classList.add('flip-card-turn');
+        }
+    }
+
+    async dealerTurn() {
+        // Simulate dealer taking some time before making a decision
+        await this.wait(1000)
+    
+        // Dealer hits on soft 17 and player hasn't busted
+        while(this.dealer.score < 17 && this.player.score < 22) {
+            console.log(`dealer score: ${this.dealer.score}`);
+            // Draw cards and deal them
+            this.deck.drawCards(1).then( card => {
+                this.dealCards([this.dealer], 1, card);
+            });
+            await this.wait(1500);
+        }
+        
+        // Flip dealer card and wait a bit before displaying the results of dealer's turn
+        this.flipDealerCard();
+        await this.wait(500);
+
+        // Update dealer message to whatever decision dealer has made
+        this.dealer.msgElement.classList.remove('hidden');
+        let message;
+        this.dealer.score > 21 ? message = 'Dealer bust!' : message = 'Dealer stands';
+        this.dealer.updateMsgElementContent(message);
+    }
+
+    async stand() {
+        // Update message to read "Stand"
+        addRemoveHiddenClass([hitBtn, standBtn], [this.player.msgElement]);
+        this.player.updateMsgElementContent('Stand');
+                
+        await this.dealerTurn();
+        this.dealer.displayScore('Dealer Score: ', false);
+        
+        // Show who won the round and update money accordingly 
+        this.displayWinner()
+        this.updateMoney();
+        this.player.displayBankAndBet();
+
+        // Determine if player has won the game and if so, end the game
+        // If player lost, make sure they have enough for their bet
+        const playerWin = this.determineWinner() === 'Player';
+        if(!playerWin) {
+            adjustPreviousBet();
+            checkGameoverAndEnd();
+        }
+
+        // // only remove player cards on a split
+        // if(!player.secondHand) {
+        //     await removeCards([player, dealer]);
+        // } else {
+        //     await removeCards([player]);
+        // }
+    
+        // if(!playerWin) {
+        //     adjustPreviousBet();
+        //     checkGameoverAndEnd();
+        // }
+    
+        // // don't start round if calling this from split
+        // if(!player.secondHand) {
+        //     startRound();
+        // } else {
+        //     player.secondHand = false;
+        // }
     }
 
     /* === Card dealing methods === */
@@ -417,7 +573,7 @@ class Game {
             }
 
             // Flip dealer's first card so only the back is showing
-            const flipFirstCard = thePlayer === this.dealer;
+            const flipFirstCard = ((thePlayer === this.dealer) && (cardsPerPlayer > 1));
             thePlayer.displayCards(cardsPerPlayer, flipFirstCard, displayCards);
 
             // update score and visible score based on card values
@@ -460,7 +616,7 @@ class Game {
         addRemoveHiddenClass([bank, dealBtn], [hitBtn, standBtn]);
         
         // Undo ability to remove chips
-        this.enableDecreaseBet(false);        
+        this.enableDecreaseBet(false);
     }
 }
 
@@ -508,9 +664,13 @@ playBtn.addEventListener('click', () => {
     blackjack.startGame();
 });
 
-/* Initial Deal Cards */
+// Initial Deal Cards
 dealBtn.addEventListener('click', () => {
     blackjack.dealAction();
+});
+
+standBtn.addEventListener('click', () => {
+    blackjack.stand();
 });
 
 /* Game loop */
