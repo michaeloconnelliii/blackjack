@@ -256,6 +256,23 @@ class Player {
             }, timeOut);
         }
     }
+
+    // Add the "remove-card" class to animate card leaving the table and then permanently remove the card from player's array
+    async removeCards() {
+        let removeCards = [];
+        
+        // move player cards off table
+        for(let card of this.cardContainer.children) {
+            removeCards.push(card);
+            card.classList.add('remove-card');
+            await wait(500);
+        }
+    
+        // remove card elements permanently
+        removeCards.forEach( card => { 
+            card.remove();
+        });
+    }
 }
 
 class Deck {
@@ -335,6 +352,14 @@ class Game {
         
         // start player game with default bet of $100
         this.player.updateBet(100);
+    }
+
+    /* Game is over once player runs out of money */
+    checkGameoverAndEnd() {
+        if(this.player.money <= 0 && this.player.totalBet <= 0) {
+            playModal.classList.add('hidden');
+            gameOverModal.classList.remove('hidden');
+        }
     }
 
     /* Hide the deal button if player's bet is nonexistent, can't deal without a bet */
@@ -438,11 +463,6 @@ class Game {
         cardAmt.textContent = `Cards Remaining: ${this.deck.cardsRemaining}`;
     }
 
-    // Helper method for simulate taking some time before making a decision. Used because JS doesn't support sleep or other CPU blocker.
-    wait(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
     startRound() {
         this.player.displayInfo();
         
@@ -480,7 +500,7 @@ class Game {
 
     async dealerTurn() {
         // Simulate dealer taking some time before making a decision
-        await this.wait(1000)
+        await wait(1000)
     
         // Dealer hits on soft 17 and player hasn't busted
         while(this.dealer.score < 17 && this.player.score < 22) {
@@ -489,12 +509,12 @@ class Game {
             this.deck.drawCards(1).then( card => {
                 this.dealCards([this.dealer], 1, card);
             });
-            await this.wait(1500);
+            await wait(1500);
         }
         
         // Flip dealer card and wait a bit before displaying the results of dealer's turn
         this.flipDealerCard();
-        await this.wait(500);
+        await wait(500);
 
         // Update dealer message to whatever decision dealer has made
         this.dealer.msgElement.classList.remove('hidden');
@@ -520,28 +540,12 @@ class Game {
         // If player lost, make sure they have enough for their bet
         const playerWin = this.determineWinner() === 'Player';
         if(!playerWin) {
-            adjustPreviousBet();
-            checkGameoverAndEnd();
+            this.player.adjustPreviousBet();
+            this.checkGameoverAndEnd();
         }
 
-        // // only remove player cards on a split
-        // if(!player.secondHand) {
-        //     await removeCards([player, dealer]);
-        // } else {
-        //     await removeCards([player]);
-        // }
-    
-        // if(!playerWin) {
-        //     adjustPreviousBet();
-        //     checkGameoverAndEnd();
-        // }
-    
-        // // don't start round if calling this from split
-        // if(!player.secondHand) {
-        //     startRound();
-        // } else {
-        //     player.secondHand = false;
-        // }
+        // Get rid of the cards and start the next round
+        this.clearTableStartRound();
     }
 
     /* === Card dealing methods === */
@@ -599,6 +603,15 @@ class Game {
         this.checkReshuffle();
     }
 
+    // Clear all the cards from the table and startup the new round
+    async clearTableStartRound() {
+        this.player.removeCards();
+        await wait(1000);
+        this.dealer.removeCards();
+        await wait(1700);
+        this.startRound();
+    }
+
     /* Initial card dealing where dealer gets 2 cards and player gets 2 cards.
        
        Clear out both player and dealer card arrays, deal 2 cards each, remove the deal button and chips to add, add
@@ -621,6 +634,11 @@ class Game {
 }
 
 /* Helper methods */
+
+// Helper method for simulate taking some time before making a decision. Used because JS doesn't support sleep or other CPU blocker.
+async function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /* Adds or removes the "hidden" class attribute to specified elements when multiple elements need to be hidden/unhidden.
    
