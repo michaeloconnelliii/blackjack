@@ -1,5 +1,5 @@
 /* Oppertunities for improvement:
-   - Add splitting, insurance, doubling capabilities */
+   - Add splitting, insurance, doubling, play again capabilities */
 
 /* Global Objects */
 const playBtn = document.getElementById('play-btn');
@@ -177,7 +177,7 @@ class Player {
                 }
             });
         }
-        // repeat previous bet
+        // Repeat previous bet if player can afford it
         else {
             this.money -= this.totalBet;
         }
@@ -265,7 +265,7 @@ class Player {
         for(let card of this.cardContainer.children) {
             removeCards.push(card);
             card.classList.add('remove-card');
-            await wait(500);
+            await wait(400);
         }
     
         // remove card elements permanently
@@ -346,7 +346,7 @@ class Game {
 
     async initGame() {    
         // Remove the "Blackjack" intro screen
-        addRemoveHiddenClass([frontPage], [playModal]);
+        addRemoveHiddenClass([frontPage, gameOverModal], [playModal]);
         
         await this.deck.initDeck();
         
@@ -355,11 +355,8 @@ class Game {
     }
 
     /* Game is over once player runs out of money */
-    checkGameoverAndEnd() {
-        if(this.player.money <= 0 && this.player.totalBet <= 0) {
-            playModal.classList.add('hidden');
-            gameOverModal.classList.remove('hidden');
-        }
+    checkGameover() {
+        return ((this.player.money <= 0) && (this.player.totalBet <= 0));
     }
 
     /* Hide the deal button if player's bet is nonexistent, can't deal without a bet */
@@ -513,6 +510,7 @@ class Game {
         }
         
         // Flip dealer card and wait a bit before displaying the results of dealer's turn
+        await wait(500);
         this.flipDealerCard();
         await wait(500);
 
@@ -523,11 +521,7 @@ class Game {
         this.dealer.updateMsgElementContent(message);
     }
 
-    async stand() {
-        // Update message to read "Stand"
-        addRemoveHiddenClass([hitBtn, standBtn], [this.player.msgElement]);
-        this.player.updateMsgElementContent('Stand');
-                
+    async endPlayerTurn() {
         await this.dealerTurn();
         this.dealer.displayScore('Dealer Score: ', false);
         
@@ -535,17 +529,43 @@ class Game {
         this.displayWinner()
         this.updateMoney();
         this.player.displayBankAndBet();
+        await wait(1500);
 
         // Determine if player has won the game and if so, end the game
         // If player lost, make sure they have enough for their bet
-        const playerWin = this.determineWinner() === 'Player';
-        if(!playerWin) {
+        const winner = this.determineWinner();
+        const dealerWin = winner === 'Dealer';
+        
+        if(dealerWin) {
             this.player.adjustPreviousBet();
-            this.checkGameoverAndEnd();
+            if(this.checkGameover()) {
+                addRemoveHiddenClass([playModal, playAgainBtn], [gameOverModal]);
+            }
         }
 
         // Get rid of the cards and start the next round
         this.clearTableStartRound();
+    }
+
+    async stand() {
+        // Update message to read "Stand"
+        addRemoveHiddenClass([hitBtn, standBtn], [this.player.msgElement]);
+        this.player.updateMsgElementContent('Stand');
+                
+        this.endPlayerTurn();
+    }
+
+    async hit() {
+        const card = await this.deck.drawCards(1);
+        this.dealCards([this.player], 1, card);
+
+        if(this.player.score > 21) {
+            // Update message to read "Hit"
+            addRemoveHiddenClass([hitBtn, standBtn], [this.player.msgElement]);
+            this.player.updateMsgElementContent('Bust!');
+
+            this.endPlayerTurn();
+        }
     }
 
     /* === Card dealing methods === */
@@ -605,10 +625,8 @@ class Game {
 
     // Clear all the cards from the table and startup the new round
     async clearTableStartRound() {
-        this.player.removeCards();
-        await wait(1000);
-        this.dealer.removeCards();
-        await wait(1700);
+        await this.player.removeCards();
+        await this.dealer.removeCards();
         this.startRound();
     }
 
@@ -677,7 +695,7 @@ const startingDecks = 2;
 
 let blackjack = new Game(startingMoney, startingDecks);
 
-/* Event Handlers */
+/* Event Handlers/Game flow */
 playBtn.addEventListener('click', () => {
     blackjack.startGame();
 });
@@ -691,4 +709,6 @@ standBtn.addEventListener('click', () => {
     blackjack.stand();
 });
 
-/* Game loop */
+hitBtn.addEventListener('click', () => {
+    blackjack.hit();
+});
