@@ -182,7 +182,7 @@ class Player {
             // update player's bet queue to match their money amount
             chipAmts.forEach( chipAmt => {
                 while(chipAmt <= this.money) {
-                    updateBet(chipAmt);
+                    this.updateBet(chipAmt);
                 }
             });
         }
