@@ -509,9 +509,8 @@ class Game {
         // Dealer hits on soft 17 and player hasn't busted
         while(this.dealer.score < 17 && this.player.score < 22) {
             // Draw cards and deal them
-            this.deck.drawCards(1).then( card => {
-                this.dealCards([this.dealer], 1, card);
-            });
+            const card = await this.deck.drawCards(1);
+            this.dealCards([this.dealer], 1, card);
             await wait(1500);
         }
         
@@ -647,9 +646,8 @@ class Game {
         this.dealer.clearCardArr();
 
         // 4 cards will be dealt: 2 for player, 2 for dealer
-        this.deck.drawCards(4).then( cards => {
-            this.dealCards([this.dealer, this.player], 2, cards);
-        });
+        const cards = await this.deck.drawCards(4);
+        this.dealCards([this.dealer, this.player], 2, cards);
         
         addRemoveHiddenClass([bank, dealBtn], [hitBtn, standBtn]);
         
