@@ -48,9 +48,6 @@ The hit and split method in the Game class consists of the Game class method: en
 ##### endPlayerTurn()
 Allows the dealer to have a turn (implemented in Game's dealerTurn - where dealer hits until they get a soft 17 or stands before if player busts), flip the unshown dealer card, update the results of the hand, and then remove the cards from the table (both by animating this and actually removing the card objects from the Player card arrays).
 
-## Project Demo
-The game is currently hosted on Heroku: https://michaeloconnelliii-blackjack.herokuapp.com/
-
 ## What is in this repository
 * index.html, index,js and style.css are for the game
 * index.php and composer.json are for hosting on Heroku
